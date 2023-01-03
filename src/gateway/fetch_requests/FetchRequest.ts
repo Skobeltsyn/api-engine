@@ -1,6 +1,7 @@
 import SessionContainer from "../../session/SessionContainer";
 
 export default class FetchRequest {
+    numOfRetriesBeforeReject: number;
     url: URL;
     data: any;
     amountOfTries: number;
@@ -8,7 +9,8 @@ export default class FetchRequest {
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
     madeReject?: (value: (PromiseLike<unknown> | unknown)) => void;
 
-    constructor(_url: URL, _data: any, _sessionContainer: SessionContainer<any>) {
+    constructor(_url: URL, _data: any, _sessionContainer: SessionContainer<any>, _numOfRetriesBeforeReject: number) {
+        this.numOfRetriesBeforeReject = _numOfRetriesBeforeReject;
         this.url = _url;
         this.data = _data;
         this.sessionContainer = _sessionContainer;

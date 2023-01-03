@@ -64,7 +64,7 @@ export default class RequestsQueue {
     resqueWrongRequest(_request: FetchRequest, _err: any):void {
         let me = this;
         // console.log("One more time");
-        if (_request && (_request.amountOfTries < 5)) {
+        if (_request && (_request.amountOfTries < _request.numOfRetriesBeforeReject)) {
             me.push(_request);
             clearTimeout(me.timeoutForUpdate);
             me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);

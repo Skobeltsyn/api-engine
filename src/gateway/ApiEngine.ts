@@ -13,10 +13,10 @@ export default class ApiEngine {
         this.requestsFetchingRate = _requestsFetchingRate;
         this.sessionContainer = _sessionContainer;
         this.sessionContainer.apiEngine = this;
-        this.startProcess = this.startProcess.bind(this);
+        this.startQueue = this.startQueue.bind(this);
     }
 
-    startProcess() {
+    startQueue() {
         let me = this;
         console.log("Starting queing process");
         if (!this.requestsQueue) {
@@ -31,10 +31,14 @@ export default class ApiEngine {
     }
 
     asyncFetch(_url:string, _dataToSend: any) {
+        return this.asyncFetchWithRetries(_url, _dataToSend, 5);
+    }
+
+    asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number) {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`);
         if (!me.requestsQueue) return me.whatsWrong();
-        let request = new FetchRequest(url, _dataToSend, this.sessionContainer);
+        let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject);
         me.requestsQueue.push(request);
         return request.make();
     }
