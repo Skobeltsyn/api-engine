@@ -8,5 +8,5 @@
     "module": "es6",
     "moduleResolution": "node"
   },
-  "include": ["src"]
+  "include": ["index.ts"]
 }

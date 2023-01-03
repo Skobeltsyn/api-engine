@@ -46,13 +46,20 @@ export default class FetchRequest {
         // alert(JSON.stringify(this.chatApp.sessionContainer));
         // alert(JSON.stringify(this.chatApp.sessionContainer.jwtContainer));
         let jwtContainer = this.sessionContainer.jwtContainer;
-        if (!jwtContainer) throw new Error('Запрос без активного JWT');
-        let headers = {
-            'Accept': 'application/json',
-            "mode": 'cors',
-            "Authorization": jwtContainer.content,
-            "csrf": jwtContainer.csrf
-        } as any;
+        let headers = {} as any;
+        if (!jwtContainer) {
+            headers = {
+                'Accept': 'application/json',
+                "mode": 'cors'
+            } as any;
+        } else {
+            headers = {
+                'Accept': 'application/json',
+                "mode": 'cors',
+                "Authorization": jwtContainer.content,
+                "csrf": jwtContainer.csrf
+            } as any;
+        }
         let contentType = this.generateContentTypetData();
         if (contentType) {
             headers['Content-Type'] = this.generateContentTypetData();
