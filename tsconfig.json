@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
-    "lib": [ "es2018", "dom"],
-    "target": "es5"
-  }
+    "strict": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "target": "es6",
+    "module": "es6",
+    "moduleResolution": "node"
+  },
+  "include": ["src"]
 }

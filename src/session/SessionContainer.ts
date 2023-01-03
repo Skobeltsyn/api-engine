@@ -5,6 +5,7 @@ export default class SessionContainer<UserClass> {
     private meUrl: string;
 
     get apiEngine(): ApiEngine {
+        if (!this._apiEngine) throw "No API engine set";
         return this._apiEngine;
     }
 
@@ -12,9 +13,10 @@ export default class SessionContainer<UserClass> {
         this._apiEngine = value;
     }
     userClassAsObject: any;
-    private _apiEngine?: ApiEngine
+    private _apiEngine: ApiEngine | null
 
     constructor(_userClassAsObject: any, _meUrl: string) {
+        this._apiEngine = null;
         this.meUrl = _meUrl;
         this._currentUser = null;
         this.userClassAsObject = _userClassAsObject;

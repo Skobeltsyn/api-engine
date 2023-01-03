@@ -3,13 +3,12 @@ import SessionContainer from "../../session/SessionContainer";
 export default class FetchRequest {
     url: URL;
     data: any;
-    anonymous: boolean;
     amountOfTries: number;
-    sessionContainer: SessionContainer;
+    sessionContainer: SessionContainer<any>;
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
     madeReject?: (value: (PromiseLike<unknown> | unknown)) => void;
 
-    constructor(_url: URL, _data: any, _sessionContainer: SessionContainer) {
+    constructor(_url: URL, _data: any, _sessionContainer: SessionContainer<any>) {
         this.url = _url;
         this.data = _data;
         this.sessionContainer = _sessionContainer;
@@ -19,9 +18,6 @@ export default class FetchRequest {
     }
 
     generateHeaders():HeadersInit {
-        if (this.anonymous) {
-            return this.generateAnonymousHeaders();
-        }
         return this.generateHeadersWithAuthorization();
     }
 

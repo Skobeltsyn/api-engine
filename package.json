@@ -1,10 +1,12 @@
 {
   "name": "api-engine",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "API engine for async fetching",
   "main": "index.ts",
   "scripts": {
-    "test": "echo 'no test yet'"
+    "test": "echo 'no test yet'",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc && cp package.json README.md ./dist"
   },
   "repository": {
     "type": "git",
@@ -19,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/Skobeltsyn/api-engine/issues"
   },
-  "homepage": "https://github.com/Skobeltsyn/api-engine#readme"
+  "homepage": "https://github.com/Skobeltsyn/api-engine#readme",
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  }
 }
