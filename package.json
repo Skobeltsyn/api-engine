@@ -2,9 +2,9 @@
   "name": "api-engine",
   "version": "0.0.1",
   "description": "API engine for async fetching",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "test": "test.js"
+    "test": "echo 'no test yet'"
   },
   "repository": {
     "type": "git",
