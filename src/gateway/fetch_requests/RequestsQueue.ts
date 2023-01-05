@@ -52,6 +52,10 @@ export default class RequestsQueue {
                     if (request.sessionContainer.jwtContainer) {
                         if (_res.csrf) request.sessionContainer.jwtContainer.csrf = _res.csrf;
                     }
+                    if (request.cacheContainer) {
+                        if (!_res.do_not_cache_me)
+                            request.cacheContainer.setKey(request.cacheKey, _res);
+                    }
                     request.madeResolve(_res);
                 }
             }, (_err) => {

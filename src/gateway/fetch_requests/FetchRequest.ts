@@ -1,4 +1,5 @@
 import SessionContainer from "../../session/SessionContainer";
+import CacheContainer from "../../models/CacheContainer";
 
 export default class FetchRequest {
     numOfRetriesBeforeReject: number;
@@ -6,15 +7,20 @@ export default class FetchRequest {
     data: any;
     amountOfTries: number;
     sessionContainer: SessionContainer<any>;
+    cacheContainer: CacheContainer | null;
+    cacheKey: string | null;
+
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
     madeReject?: (value: (PromiseLike<unknown> | unknown)) => void;
 
-    constructor(_url: URL, _data: any, _sessionContainer: SessionContainer<any>, _numOfRetriesBeforeReject: number) {
+    constructor(_url: URL, _data: any, _sessionContainer: SessionContainer<any>, _numOfRetriesBeforeReject: number, _cacheContainer: CacheContainer | null, _cacheKey: string | null) {
         this.numOfRetriesBeforeReject = _numOfRetriesBeforeReject;
         this.url = _url;
+        this.cacheKey = _cacheKey;
         this.data = _data;
         this.sessionContainer = _sessionContainer;
         this.amountOfTries = 0;
+        this.cacheContainer = _cacheContainer;
 
         this.generateHeadersWithAuthorization = this.generateHeadersWithAuthorization.bind(this);
     }

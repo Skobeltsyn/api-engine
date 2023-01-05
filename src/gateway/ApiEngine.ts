@@ -1,12 +1,22 @@
 import FetchRequest from "./fetch_requests/FetchRequest";
 import RequestsQueue from "./fetch_requests/RequestsQueue";
 import SessionContainer from "../session/SessionContainer";
+import CacheContainer from "../models/CacheContainer";
 
 export default class ApiEngine {
+    get cacheContainer(): CacheContainer {
+        return this._cacheContainer;
+    }
+
+    set cacheContainer(value: CacheContainer) {
+        this._cacheContainer = value;
+    }
+
     private requestsFetchingRate: number;
     requestsQueue?: RequestsQueue;
     serverUrl: string;
     sessionContainer: SessionContainer<any>;
+    private _cacheContainer: CacheContainer;
 
     constructor(_serverUrl: string, _requestsFetchingRate: number, _sessionContainer: SessionContainer<any>) {
         this.serverUrl = _serverUrl;
@@ -14,6 +24,7 @@ export default class ApiEngine {
         this.sessionContainer = _sessionContainer;
         this.sessionContainer.apiEngine = this;
         this.startQueue = this.startQueue.bind(this);
+        this._cacheContainer = new CacheContainer("default_api_storage");
     }
 
     startQueue() {
@@ -31,14 +42,24 @@ export default class ApiEngine {
     }
 
     asyncFetch(_url:string, _dataToSend: any) {
-        return this.asyncFetchWithRetries(_url, _dataToSend, 5);
+        return this.asyncFetchWithRetries(_url, _dataToSend, 5, false);
     }
 
-    asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number) {
+    asyncFetchWithCache(_url:string, _dataToSend: any) {
+        let cachedData = this.cacheContainer.getKey(_url);
+        if (cachedData)
+            return new Promise((_resolve) => {
+                _resolve(cachedData);
+            });
+
+        return this.asyncFetchWithRetries(_url, _dataToSend, 5, true);
+    }
+
+    asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean) {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`);
         if (!me.requestsQueue) return me.whatsWrong();
-        let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject);
+        let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
         me.requestsQueue.push(request);
         return request.make();
     }
