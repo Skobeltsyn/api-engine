@@ -46,6 +46,10 @@ export default class ApiEngine {
     }
 
     asyncFetchWithCache(_url:string, _dataToSend: any, _priority: number) {
+        return this.prioritizedAsyncFetchWithCache(_url, _dataToSend, 0);
+    }
+
+    prioritizedAsyncFetchWithCache(_url:string, _dataToSend: any, _priority: number) {
         let cachedData = this.cacheContainer.getKey(_url);
         if (cachedData)
             return new Promise((_resolve) => {
