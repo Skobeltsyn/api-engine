@@ -42,24 +42,25 @@ export default class ApiEngine {
     }
 
     asyncFetch(_url:string, _dataToSend: any) {
-        return this.asyncFetchWithRetries(_url, _dataToSend, 5, false);
+        return this.asyncFetchWithRetries(_url, _dataToSend, 5, false, 0);
     }
 
-    asyncFetchWithCache(_url:string, _dataToSend: any) {
+    asyncFetchWithCache(_url:string, _dataToSend: any, _priority: number) {
         let cachedData = this.cacheContainer.getKey(_url);
         if (cachedData)
             return new Promise((_resolve) => {
                 _resolve(cachedData);
             });
 
-        return this.asyncFetchWithRetries(_url, _dataToSend, 5, true);
+        return this.asyncFetchWithRetries(_url, _dataToSend, 5, true, _priority);
     }
 
-    asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean) {
+    asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number) {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`);
         if (!me.requestsQueue) return me.whatsWrong();
         let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
+        request.priority = -_priority;
         me.requestsQueue.push(request);
         return request.make();
     }
