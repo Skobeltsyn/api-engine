@@ -45,7 +45,7 @@ export default class ApiEngine {
         return this.asyncFetchWithRetries(_url, _dataToSend, 5, false, 0);
     }
 
-    asyncFetchWithCache(_url:string, _dataToSend: any, _priority: number) {
+    asyncFetchWithCache(_url:string, _dataToSend: any) {
         return this.prioritizedAsyncFetchWithCache(_url, _dataToSend, 0);
     }
 
