@@ -2,6 +2,13 @@ import SessionContainer from "../../session/SessionContainer";
 import CacheContainer from "../../models/CacheContainer";
 
 export default class FetchRequest {
+    get priority(): number {
+        return this._priority;
+    }
+
+    set priority(value: number) {
+        this._priority = value;
+    }
     numOfRetriesBeforeReject: number;
     url: URL;
     data: any;
@@ -9,6 +16,7 @@ export default class FetchRequest {
     sessionContainer: SessionContainer<any>;
     cacheContainer: CacheContainer | null;
     cacheKey: string | null;
+    private _priority: number;
 
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
     madeReject?: (value: (PromiseLike<unknown> | unknown)) => void;
@@ -21,6 +29,7 @@ export default class FetchRequest {
         this.sessionContainer = _sessionContainer;
         this.amountOfTries = 0;
         this.cacheContainer = _cacheContainer;
+        this._priority = 0;
 
         this.generateHeadersWithAuthorization = this.generateHeadersWithAuthorization.bind(this);
     }

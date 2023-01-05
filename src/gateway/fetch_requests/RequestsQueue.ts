@@ -36,7 +36,21 @@ export default class RequestsQueue {
 
     processRequest() {
         let me = this;
-        let request = me.requests.shift();
+        let request = null as (FetchRequest | null);
+        let requestIndex = 0;
+        if (me.requests.length > 0) {
+            request = me.requests[requestIndex];
+            for(let i = 1; i < me.requests.length; i++) {
+                let other = me.requests[i];
+                if (other === null) continue;
+                if (other === undefined) continue;
+                if (request.priority < other.priority) {
+                    request = other;
+                    requestIndex = i;
+                }
+            }
+            me.requests.splice(requestIndex, 1);
+        }
 
         if (request === undefined || request === null) {
             clearTimeout(this.timeoutForUpdate);
@@ -44,25 +58,25 @@ export default class RequestsQueue {
             return;
         }
         me.requestsNumber += 1;
-            request.perform().then((_res) => {
-                if (request !== undefined && request.madeResolve) {
-                    clearTimeout(me.timeoutForUpdate);
-                    me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);
-                    // if (me.chatApp.sessionContainer.jwtContainer)
-                    if (request.sessionContainer.jwtContainer) {
-                        if (_res.csrf) request.sessionContainer.jwtContainer.csrf = _res.csrf;
-                    }
-                    if (request.cacheContainer) {
-                        if (!_res.do_not_cache_me)
-                            request.cacheContainer.setKey(request.cacheKey, _res);
-                    }
-                    request.madeResolve(_res);
+        request.perform().then((_res) => {
+            if (request !== null && request !== undefined && request.madeResolve) {
+                clearTimeout(me.timeoutForUpdate);
+                me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);
+                // if (me.chatApp.sessionContainer.jwtContainer)
+                if (request.sessionContainer.jwtContainer) {
+                    if (_res.csrf) request.sessionContainer.jwtContainer.csrf = _res.csrf;
                 }
-            }, (_err) => {
-                if (request) me.resqueWrongRequest(request, _err);
-            }).catch((_err: any) => {
-                if (request) me.resqueWrongRequest(request, _err);
-            });
+                if (request.cacheContainer) {
+                    if (!_res.do_not_cache_me)
+                        request.cacheContainer.setKey(request.cacheKey, _res);
+                }
+                request.madeResolve(_res);
+            }
+        }, (_err) => {
+            if (request) me.resqueWrongRequest(request, _err);
+        }).catch((_err: any) => {
+            if (request) me.resqueWrongRequest(request, _err);
+        });
     }
 
     resqueWrongRequest(_request: FetchRequest, _err: any):void {
