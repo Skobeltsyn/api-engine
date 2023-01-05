@@ -12,7 +12,7 @@ export default class ApiEngine {
         this._cacheContainer = value;
     }
 
-    private requestsFetchingRate: number;
+    requestsFetchingRate: number;
     requestsQueue?: RequestsQueue;
     serverUrl: string;
     sessionContainer: SessionContainer<any>;
@@ -64,7 +64,7 @@ export default class ApiEngine {
         let url = new URL(`${me.serverUrl}/${_url}`);
         if (!me.requestsQueue) return me.whatsWrong();
         let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
-        request.priority = -_priority;
+        request.priority = _priority;
         me.requestsQueue.push(request);
         return request.make();
     }

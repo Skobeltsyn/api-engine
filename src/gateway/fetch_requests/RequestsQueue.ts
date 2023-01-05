@@ -40,6 +40,7 @@ export default class RequestsQueue {
         let requestIndex = 0;
         if (me.requests.length > 0) {
             request = me.requests[requestIndex];
+
             for(let i = 1; i < me.requests.length; i++) {
                 let other = me.requests[i];
                 if (other === null) continue;
