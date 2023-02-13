@@ -18,7 +18,9 @@ export default class ApiEngine {
     sessionContainer: SessionContainer<any>;
     private _cacheContainer: CacheContainer;
 
-    constructor(_serverUrl: string, _requestsFetchingRate: number, _sessionContainer: SessionContainer<any>) {
+    constructor(_serverUrl: string,
+                _requestsFetchingRate: number,
+                _sessionContainer: SessionContainer<any>) {
         this.serverUrl = _serverUrl;
         this.requestsFetchingRate = _requestsFetchingRate;
         this.sessionContainer = _sessionContainer;
