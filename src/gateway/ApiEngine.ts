@@ -4,6 +4,13 @@ import SessionContainer from "../session/SessionContainer";
 import CacheContainer from "../models/CacheContainer";
 
 export default class ApiEngine {
+    get canUseOutsideLinks(): boolean {
+        return this._canUseOutsideLinks;
+    }
+
+    set canUseOutsideLinks(value: boolean) {
+        this._canUseOutsideLinks = value;
+    }
     get cacheContainer(): CacheContainer {
         return this._cacheContainer;
     }
@@ -11,7 +18,7 @@ export default class ApiEngine {
     set cacheContainer(value: CacheContainer) {
         this._cacheContainer = value;
     }
-
+    private _canUseOutsideLinks: boolean;
     requestsFetchingRate: number;
     requestsQueue?: RequestsQueue;
     serverUrl: string;
@@ -26,7 +33,15 @@ export default class ApiEngine {
         this.sessionContainer = _sessionContainer;
         this.sessionContainer.apiEngine = this;
         this.startQueue = this.startQueue.bind(this);
+        this.asyncFetch = this.asyncFetch.bind(this);
+        this.asyncFetchWithCache = this.asyncFetchWithCache.bind(this);
+        this.prioritizedAsyncFetchWithCache = this.prioritizedAsyncFetchWithCache.bind(this);
+        this.asyncFetchWithRetries = this.asyncFetchWithRetries.bind(this);
+        this.whatsWrong = this.whatsWrong.bind(this);
+        this._canUseOutsideLinks = false;
+
         this._cacheContainer = new CacheContainer("default_api_storage");
+
     }
 
     startQueue() {
@@ -48,10 +63,12 @@ export default class ApiEngine {
     }
 
     asyncFetchWithCache(_url:string, _dataToSend: any) {
+        console.log("Using cache");
         return this.prioritizedAsyncFetchWithCache(_url, _dataToSend, 0);
     }
 
     prioritizedAsyncFetchWithCache(_url:string, _dataToSend: any, _priority: number) {
+        console.log(`Checking for key ${_url}`);;
         let cachedData = this.cacheContainer.getKey(_url);
         if (cachedData)
             return new Promise((_resolve) => {
@@ -64,6 +81,11 @@ export default class ApiEngine {
     asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number) {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`);
+        if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
+            if (me.canUseOutsideLinks) {
+                url = new URL(_url);
+            }
+        }
         if (!me.requestsQueue) return me.whatsWrong();
         let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
         request.priority = _priority;

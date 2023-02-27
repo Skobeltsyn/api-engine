@@ -19,10 +19,14 @@ export default class CacheContainer {
 
   getKey(_key: string): any {
     let data = null as any;
-    if (this.persistent)
+    if (this.persistent) {
+      console.log(`Looking in localStorage`);
       data = localStorage.getItem(this.getStorageKey());
-    else
+    }
+    else {
+      console.log(`Looking in quickStorage`);
       data = `${this.quickStorage}`;
+    }
     if (!data) return null;
     let parsedData = JSON.parse(data) as any;
     let foundValue = parsedData[_key];
