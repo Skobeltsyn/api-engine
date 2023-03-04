@@ -52,12 +52,12 @@ export default class SessionContainer<UserClass> {
         console.log("checkUser");
         return new Promise((resolve, reject) => {
             console.log("Sending request");
-            me.apiEngine.asyncFetch(me.meUrl, {}).then((e:any) => {
+            me.apiEngine.asyncFetch(me.meUrl, {}).then((e: any) => {
                 console.log("Sending request");
                 if (!e) {console.error("Empty answer");}
                 if (!me._jwtContainer) {console.error("No JWT");}
 
-                if (e && me._jwtContainer) {
+                if (e || me._jwtContainer) {
                     // me._currentUser = (new me.userClassAsObject(e.uuid)) as UserClass;
                     console.log("Setting user");
                     me._currentUser = (new me.userClassAsObject(e)) as UserClass;

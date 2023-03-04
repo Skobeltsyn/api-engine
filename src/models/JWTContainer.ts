@@ -1,6 +1,8 @@
 export default class JWTContainer {
     private readonly _content: string
     private _csrf: string
+
+
     get content(): string {
         return this._content;
     }
@@ -21,7 +23,7 @@ export default class JWTContainer {
 
     static tryToRestoreJWT():JWTContainer | null {
         let contentFromLocalStorage = localStorage.getItem("jwt");
-        let csrfFromLocalStorage = localStorage.getItem("csrf");
+        let csrfFromLocalStorage    = localStorage.getItem("csrf");
         if (contentFromLocalStorage && csrfFromLocalStorage)
             return new JWTContainer(contentFromLocalStorage, csrfFromLocalStorage);
         return null;
