@@ -38,6 +38,10 @@ export default class ApiEngine {
         this.prioritizedAsyncFetchWithCache = this.prioritizedAsyncFetchWithCache.bind(this);
         this.asyncFetchWithRetries = this.asyncFetchWithRetries.bind(this);
         this.whatsWrong = this.whatsWrong.bind(this);
+
+        this.asyncFetchWithoutQueing = this.asyncFetchWithoutQueing.bind(this);
+        this.cleanQueue = this.cleanQueue.bind(this);
+
         this._canUseOutsideLinks = false;
 
         this._cacheContainer = new CacheContainer("default_api_storage");
@@ -91,6 +95,28 @@ export default class ApiEngine {
         request.priority = _priority;
         me.requestsQueue.push(request);
         return request.make();
+    }
+
+    asyncFetchWithoutQueing(_url:string, _dataToSend: any) {
+        let me = this;
+        let url = new URL(`${me.serverUrl}/${_url}`);
+
+        return new Promise((_resolve) => {
+            if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
+                if (me.canUseOutsideLinks) {
+                    url = new URL(_url);
+                }
+            }
+
+            let request = new FetchRequest(url, _dataToSend, this.sessionContainer, 0, null, _url);
+            request.perform().then(() => {
+                    _resolve(true);
+            });
+        });
+    }
+
+    cleanQueue() {
+        if (this.requestsQueue) this.requestsQueue.clean();
     }
 
     whatsWrong() {

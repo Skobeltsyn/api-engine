@@ -16,6 +16,11 @@ export default class RequestsQueue {
         this.active = false;
         this.apiEngine = _api;
         this.processRequest = this.processRequest.bind(this);
+        this.clean = this.clean.bind(this);
+    }
+
+    clean() {
+        this.requests.splice(0,this.requests.length);
     }
 
     push(_req: FetchRequest) {

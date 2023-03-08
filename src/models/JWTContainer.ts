@@ -33,6 +33,9 @@ export default class JWTContainer {
         if (this._content && this._csrf) {
             localStorage.setItem("jwt", this._content);
             localStorage.setItem("csrf", this._csrf);
+            console.log("Written to localstorage");
+        } else {
+            console.error(`Did not write to localstorage: content: ${!!this._content}, csrf: ${!!this._csrf}`);
         }
     }
 
