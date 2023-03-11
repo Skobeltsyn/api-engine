@@ -6,20 +6,26 @@ export default class RequestsQueue {
     private requests: FetchRequest[];
     private requestsNumber: number;
     private active: boolean;
+    private blockCurrentRequest: boolean;
     private timeoutForUpdate: ReturnType<typeof setTimeout> | undefined;
     private apiEngine: ApiEngine;
+    private activeRequest: FetchRequest | null;
 
     constructor(_requestsFetchingRate: number, _api: ApiEngine) {
         this.requests = [];
         this.requestsNumber = 0;
         this.requestsFetchingRate = _requestsFetchingRate;
         this.active = false;
+        this.activeRequest = null;
         this.apiEngine = _api;
+        this.blockCurrentRequest = false;
+
         this.processRequest = this.processRequest.bind(this);
         this.clean = this.clean.bind(this);
     }
 
     clean() {
+        if (this.activeRequest) this.blockCurrentRequest = true;
         this.requests.splice(0,this.requests.length);
     }
 
@@ -64,6 +70,7 @@ export default class RequestsQueue {
             return;
         }
         me.requestsNumber += 1;
+        me.activeRequest = request;
         request.perform().then((_res) => {
             if (request !== null && request !== undefined && request.madeResolve) {
                 clearTimeout(me.timeoutForUpdate);
@@ -76,12 +83,25 @@ export default class RequestsQueue {
                     if (!_res.do_not_cache_me)
                         request.cacheContainer.setKey(request.cacheKey, _res);
                 }
+                me.activeRequest = null;
+                if (me.blockCurrentRequest) {
+                    me.blockCurrentRequest = false;
+
+                    me.resqueWrongRequest(request, {title: "Очередь очищена"});
+                    return;
+                }
                 request.madeResolve(_res);
             }
         }, (_err) => {
-            if (request) me.resqueWrongRequest(request, _err);
+            me.activeRequest = null;
+            if (request) {
+                me.resqueWrongRequest(request, _err);
+            }
         }).catch((_err: any) => {
-            if (request) me.resqueWrongRequest(request, _err);
+            me.activeRequest = null;
+            if (request) {
+                me.resqueWrongRequest(request, _err);
+            }
         });
     }
 
