@@ -109,8 +109,8 @@ export default class ApiEngine {
             }
 
             let request = new FetchRequest(url, _dataToSend, this.sessionContainer, 0, null, _url);
-            request.perform().then(() => {
-                    _resolve(true);
+            request.perform().then((_res) => {
+                _resolve(_res);
             });
         });
     }
