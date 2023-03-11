@@ -6,7 +6,6 @@ export default class RequestsQueue {
     private requests: FetchRequest[];
     private requestsNumber: number;
     private active: boolean;
-    private blockCurrentRequest: boolean;
     private timeoutForUpdate: ReturnType<typeof setTimeout> | undefined;
     private apiEngine: ApiEngine;
     private activeRequest: FetchRequest | null;
@@ -18,14 +17,15 @@ export default class RequestsQueue {
         this.active = false;
         this.activeRequest = null;
         this.apiEngine = _api;
-        this.blockCurrentRequest = false;
-
         this.processRequest = this.processRequest.bind(this);
         this.clean = this.clean.bind(this);
     }
 
     clean() {
-        if (this.activeRequest) this.blockCurrentRequest = true;
+        if (this.activeRequest) {
+            if (this.activeRequest.madeReject)
+                this.activeRequest.madeReject({});
+        }
         this.requests.splice(0,this.requests.length);
     }
 
@@ -84,12 +84,6 @@ export default class RequestsQueue {
                         request.cacheContainer.setKey(request.cacheKey, _res);
                 }
                 me.activeRequest = null;
-                if (me.blockCurrentRequest) {
-                    me.blockCurrentRequest = false;
-
-                    me.resqueWrongRequest(request, {title: "Очередь очищена"});
-                    return;
-                }
                 request.madeResolve(_res);
             }
         }, (_err) => {
