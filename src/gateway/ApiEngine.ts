@@ -42,6 +42,8 @@ export default class ApiEngine {
         this.asyncFetchWithoutQueing = this.asyncFetchWithoutQueing.bind(this);
         this.cleanQueue = this.cleanQueue.bind(this);
 
+        this.asyncFetchBlobWithoutQueing = this.asyncFetchBlobWithoutQueing.bind(this);
+
         this._canUseOutsideLinks = false;
 
         this._cacheContainer = new CacheContainer("default_api_storage");
@@ -109,6 +111,26 @@ export default class ApiEngine {
             }
 
             let request = new FetchRequest(url, _dataToSend, this.sessionContainer, 0, null, _url);
+            request.perform().then((_res) => {
+                _resolve(_res);
+            });
+        });
+    }
+
+    asyncFetchBlobWithoutQueing(_url:string, _dataToSend: any) {
+        let me = this;
+        let url = new URL(`${me.serverUrl}/${_url}`);
+
+        return new Promise((_resolve) => {
+            if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
+                if (me.canUseOutsideLinks) {
+                    url = new URL(_url);
+                }
+            }
+
+            let request = new FetchRequest(url, _dataToSend, this.sessionContainer, 0, null, _url);
+            request.isBlob = true;
+
             request.perform().then((_res) => {
                 _resolve(_res);
             });

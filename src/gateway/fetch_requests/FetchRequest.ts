@@ -16,6 +16,7 @@ export default class FetchRequest {
     sessionContainer: SessionContainer<any>;
     cacheContainer: CacheContainer | null;
     cacheKey: string | null;
+    isBlob?: boolean;
     private _priority: number;
 
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
@@ -91,6 +92,9 @@ export default class FetchRequest {
             let data = {... me.data};
             data.headers = this.generateHeaders();
             return fetch(this.url, data).then((e: Response) => {
+                if (me.isBlob) {
+                    return e.blob();
+                }
                 return e.json()
             }).then((_res) => {
                 if (_res) {
