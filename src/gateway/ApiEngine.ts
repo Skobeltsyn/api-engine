@@ -2,6 +2,7 @@ import FetchRequest from "./fetch_requests/FetchRequest";
 import RequestsQueue from "./fetch_requests/RequestsQueue";
 import SessionContainer from "../session/SessionContainer";
 import CacheContainer from "../models/CacheContainer";
+import CQRSCommand from "../models/CQRSCommand";
 
 export default class ApiEngine {
     get canUseOutsideLinks(): boolean {
@@ -43,6 +44,7 @@ export default class ApiEngine {
         this.cleanQueue = this.cleanQueue.bind(this);
 
         this.asyncFetchBlobWithoutQueing = this.asyncFetchBlobWithoutQueing.bind(this);
+        this.corsFetch = this.corsFetch.bind(this);
 
         this._canUseOutsideLinks = false;
 
@@ -97,6 +99,30 @@ export default class ApiEngine {
         request.priority = _priority;
         me.requestsQueue.push(request);
         return request.make();
+    }
+
+    corsFetch(
+        _command: string,
+        _params: any,
+        _isBlob: boolean,
+        _sendUrl: string,
+        _ticketCheckEndPoint: string
+    ) {
+        return new Promise((_resolve) => {
+            let cqrsCommand = new CQRSCommand(
+                _command,
+                _params,
+                _isBlob,
+                _sendUrl,
+                this,
+                1000,
+                _ticketCheckEndPoint
+            );
+
+            cqrsCommand.makeRequest().then((_res: any) => {
+                _resolve(_res);
+            })
+        });
     }
 
     asyncFetchWithoutQueing(_url:string, _dataToSend: any) {
