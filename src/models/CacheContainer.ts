@@ -28,7 +28,14 @@ export default class CacheContainer {
       data = `${this.quickStorage}`;
     }
     if (!data) return null;
-    let parsedData = JSON.parse(data) as any;
+    let parsedData = {} as any;
+
+    try {
+      parsedData = JSON.parse(data);
+    } catch (e) {
+      return undefined;
+    }
+
     let foundValue = parsedData[_key];
     if (foundValue) return foundValue;
   }

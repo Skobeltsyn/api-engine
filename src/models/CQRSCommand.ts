@@ -1,7 +1,7 @@
 import ApiEngine from "../gateway/ApiEngine";
 
 export default class CQRSCommand {
-
+  private updateCallback: undefined | ((_res: string) => void);
   private _command: string;
   private _params: any;
   private api: ApiEngine;
@@ -26,7 +26,9 @@ export default class CQRSCommand {
               _url: string,
               _api: ApiEngine,
               _callPeriod: number = 1000,
-              _ticketCheckEndpoint: string = "/cqrs") {
+              _ticketCheckEndpoint: string = "/cqrs",
+              _updateCallback: undefined | ((_res: string) => void) = undefined
+              ) {
     this.api = _api;
     this._command = _command;
     this._params = _params;
@@ -34,6 +36,7 @@ export default class CQRSCommand {
     this._callPeriod = _callPeriod;
     this.isBlob = _isBlob;
     this.ticketCheckEndpoint = _ticketCheckEndpoint;
+    this.updateCallback = _updateCallback;
 
     this.makeRequest = this.makeRequest.bind(this);
     this.getResult = this.getResult.bind(this);
@@ -63,6 +66,9 @@ export default class CQRSCommand {
         me.madeResolve && me.madeResolve(_e.result);
       } else {
         setTimeout(() => {
+          if (me.updateCallback) {
+            me.updateCallback(_e.status);
+          }
           me.getResult();
         }, me._callPeriod);
       }
