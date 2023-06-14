@@ -106,7 +106,8 @@ export default class ApiEngine {
         _params: any,
         _isBlob: boolean,
         _sendUrl: string,
-        _ticketCheckEndPoint: string
+        _ticketCheckEndPoint: string,
+        _updateCallback: undefined | ((_res: string) => void) = undefined
     ) {
         return new Promise((_resolve) => {
             let cqrsCommand = new CQRSCommand(
@@ -116,7 +117,8 @@ export default class ApiEngine {
                 _sendUrl,
                 this,
                 1000,
-                _ticketCheckEndPoint
+                _ticketCheckEndPoint,
+                _updateCallback
             );
 
             cqrsCommand.makeRequest().then((_res: any) => {
