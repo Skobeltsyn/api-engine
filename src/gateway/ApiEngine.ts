@@ -3,8 +3,23 @@ import RequestsQueue from "./fetch_requests/RequestsQueue";
 import SessionContainer from "../session/SessionContainer";
 import CacheContainer from "../models/CacheContainer";
 import CQRSCommand from "../models/CQRSCommand";
+import WebsocketConnector from "./websockets/WebsocketConnector";
+import NullWebsocketConnector from "./websockets/NullWebsocketConnector";
 
 export default class ApiEngine {
+
+    get websocketConnector(): WebsocketConnector {
+        return this._websocketConnector;
+    }
+
+    set websocketConnector(value: WebsocketConnector) {
+        this._websocketConnector = value;
+    }
+
+
+    private _websocketConnector: WebsocketConnector;
+
+
     get canUseOutsideLinks(): boolean {
         return this._canUseOutsideLinks;
     }
@@ -50,6 +65,7 @@ export default class ApiEngine {
 
         this._cacheContainer = new CacheContainer("default_api_storage");
 
+        this._websocketConnector = new NullWebsocketConnector("/", this);
     }
 
     startQueue() {
