@@ -1,5 +1,4 @@
 // Класс чисто для подключения к WebSocket и диспетчит ивенты, совпадающте с каналами.
-
 import ApiEngine from "../ApiEngine";
 
 export default class WebsocketConnector {

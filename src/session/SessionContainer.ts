@@ -23,6 +23,15 @@ export default class SessionContainer<UserClass> {
         this.jwtContainer = JWTContainer.tryToRestoreJWT();
     }
 
+    get currentEntity(): UserClass {
+        if (!this._currentUser) throw "No user";
+        return this._currentUser;
+    }
+
+    set currentEntity(value: UserClass) {
+        this._currentUser = value;
+    }
+
     get currentUser(): UserClass | null {
         return this._currentUser;
     }
