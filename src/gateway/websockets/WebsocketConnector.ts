@@ -6,14 +6,14 @@ export default class WebsocketConnector {
   api: ApiEngine;
   url: string;
   pingInterval: any;
-  needToReconnect: boolean;
+  needToReconnect: boolean = true;
   usedChannels: Set<string>;
-  alive: boolean;
+  alive: boolean = false;
+  connecting: boolean = false;
 
   constructor(_url: string, _api: ApiEngine) {
     this.url = _url;
     this.api = _api;
-    this.needToReconnect = true;
     this.usedChannels = new Set<string>();
 
     this.initWebsocket = this.initWebsocket.bind(this);
@@ -21,12 +21,19 @@ export default class WebsocketConnector {
     this.webSocketOpenAction = this.webSocketOpenAction.bind(this);
     this.pingAlive = this.pingAlive.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
-    this.alive = false;
+    this.hangupWebSocket = this.hangupWebSocket.bind(this);
+  }
+
+
+  hangupWebSocket() {
+    this.websocket?.close();
   }
 
   initWebsocket() {
     // alert(1);
     let me = this;
+    if (me.connecting) return;
+    me.connecting = true;
     try {
       let url = `${me.api.serverUrl.replace("https", "wss")}/${me.url}`;
       console.log(`Enabling websocket on ${url}`)
@@ -83,6 +90,7 @@ export default class WebsocketConnector {
       // alert(5);
       me.needToReconnect = false;
       me.alive = true;
+      me.connecting = false;
       setTimeout(() => {
         me.pingInterval = setInterval(me.pingAlive,
           5000);
@@ -96,6 +104,7 @@ export default class WebsocketConnector {
         document.dispatchEvent(event);
       });
     } catch (e) {
+      me.connecting = false;
       console.log(e);
       setTimeout(me.websocketResque, 5000);
     }
