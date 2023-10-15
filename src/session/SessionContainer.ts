@@ -21,6 +21,9 @@ export default class SessionContainer<UserClass> {
         this._currentUser = null;
         this.userClassAsObject = _userClassAsObject;
         this.jwtContainer = JWTContainer.tryToRestoreJWT();
+
+        this.updateToken = this.updateToken.bind(this);
+        this.refresh = this.refresh.bind(this);
     }
 
     updateToken(_token: string) {

@@ -19,11 +19,18 @@ export default class JWTContainer {
     constructor(_content: string, _csrf: string) {
         this._content = _content;
         this._csrf = _csrf;
+        console.log("JWT enabled");
     }
 
     static tryToRestoreJWT():JWTContainer | null {
         let contentFromLocalStorage = localStorage.getItem("jwt");
+        console.log("Got jwt");
         let csrfFromLocalStorage    = localStorage.getItem("csrf");
+        console.log("Got csrf");
+        if (!csrfFromLocalStorage) {
+            throw "csrf key in local storage should be enabled, or set something like 'no csff' if not desired";
+        }
+
         if (contentFromLocalStorage && csrfFromLocalStorage)
             return new JWTContainer(contentFromLocalStorage, csrfFromLocalStorage);
         return null;
