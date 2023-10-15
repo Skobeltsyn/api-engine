@@ -23,6 +23,17 @@ export default class SessionContainer<UserClass> {
         this.jwtContainer = JWTContainer.tryToRestoreJWT();
     }
 
+    updateToken(_token: string) {
+       localStorage.setItem("jwt", _token);
+       let csrfString = localStorage.getItem("csrf");
+       localStorage.setItem("csrf", csrfString ? csrfString : "");
+       this.jwtContainer = JWTContainer.tryToRestoreJWT();
+    }
+
+    refresh() {
+        this.jwtContainer = JWTContainer.tryToRestoreJWT();
+    }
+
     get currentEntity(): UserClass {
         if (!this._currentUser) throw "No user";
         return this._currentUser;
@@ -63,14 +74,26 @@ export default class SessionContainer<UserClass> {
             console.log("Sending request");
             me.apiEngine.asyncFetch(me.meUrl, {}).then((e: any) => {
                 console.log("Sending request");
-                if (!e) {console.error("Empty answer");}
-                if (!me._jwtContainer) {console.error("No JWT");}
+                if (!e) {
+                    console.error("Empty answer");
+                    reject("Empty answer");
+                    return;
+                }
+                if (!me._jwtContainer) {
+                    console.error("No JWT");
+                    reject("No JWT");
+                    return;
+                }
 
                 if (e || me._jwtContainer) {
                     // me._currentUser = (new me.userClassAsObject(e.uuid)) as UserClass;
                     console.log("Setting user");
-                    me._currentUser = (new me.userClassAsObject(e)) as UserClass;
-                    resolve(me._currentUser);
+                    try {
+                        me._currentUser = (new me.userClassAsObject(e)) as UserClass;
+                        resolve(me._currentUser);
+                    } catch (e) {
+                        reject(e);
+                    }
                     // alert(JSON.stringify(e));
                 } else {
                     console.error("Answering error");
@@ -79,6 +102,7 @@ export default class SessionContainer<UserClass> {
             }, (e) => {
                 console.error("Something went wrong");
                 if (me._jwtContainer) me._jwtContainer.revoke();
+                reject(e);
             });
         });
     }

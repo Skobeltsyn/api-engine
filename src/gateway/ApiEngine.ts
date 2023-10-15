@@ -57,6 +57,7 @@ export default class ApiEngine {
 
         this.asyncFetchWithoutQueing = this.asyncFetchWithoutQueing.bind(this);
         this.cleanQueue = this.cleanQueue.bind(this);
+        this.updateToken = this.updateToken.bind(this);
 
         this.asyncFetchBlobWithoutQueing = this.asyncFetchBlobWithoutQueing.bind(this);
         this.corsFetch = this.corsFetch.bind(this);
@@ -192,5 +193,9 @@ export default class ApiEngine {
             if (!me.requestsQueue) reason += "Не инициализировано requestsQueue;";
             reject(reason)
         })
+    }
+
+    updateToken(_token: string) {
+        this.sessionContainer.updateToken(_token);
     }
 }
