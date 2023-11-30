@@ -91,21 +91,26 @@ export default class FetchRequest {
             me.amountOfTries += 1;
             let data = {... me.data};
             data.headers = this.generateHeaders();
-            return fetch(this.url, data).then((e: Response) => {
-                if (me.isBlob) {
-                    return e.blob();
-                }
-                return e.json()
-            }).then((_res) => {
-                if (_res) {
-                    if (me.sessionContainer.jwtContainer)
-                        if (_res.csrf) me.sessionContainer.jwtContainer.csrf = _res.csrf;
-                }
-                resolve(_res);
-            }).catch((e) => {
+            try {
+                return fetch(this.url, data).then((e: Response) => {
+                    if (me.isBlob) {
+                        return e.blob();
+                    }
+                    return e.json()
+                }).then((_res) => {
+                    if (_res) {
+                        if (me.sessionContainer.jwtContainer)
+                            if (_res.csrf) me.sessionContainer.jwtContainer.csrf = _res.csrf;
+                    }
+                    resolve(_res);
+                }).catch((e) => {
+                    me.amountOfTries += 1;
+                    reject(e);
+                });
+            } catch (e) {
                 me.amountOfTries += 1;
                 reject(e);
-            });
+            }
         });
     }
 
