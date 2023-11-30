@@ -105,11 +105,11 @@ export default class RequestsQueue {
         if (_request && (_request.amountOfTries < _request.numOfRetriesBeforeReject)) {
             me.push(_request);
             clearTimeout(me.timeoutForUpdate);
-            me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);
+            me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate + 2000); //TODO: убрать хардкод с восстановления
         } else{
             // console.log("Прекращаем");
             clearTimeout(me.timeoutForUpdate);
-            me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);
+            me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate + 2000);
             if (_request.madeReject) _request.madeReject(_err);
         }
     }
