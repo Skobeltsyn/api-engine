@@ -162,11 +162,11 @@ export default class ApiEngine {
         });
     }
 
-    asyncFetchBlobWithoutQueing(_url:string, _dataToSend: any) {
+    async asyncFetchBlobWithoutQueing(_url:string, _dataToSend: any):Promise<any> {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`);
 
-        return new Promise((_resolve) => {
+        return new Promise<any>((_resolve, _reject) => {
             if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
                 if (me.canUseOutsideLinks) {
                     url = new URL(_url);
@@ -178,6 +178,8 @@ export default class ApiEngine {
 
             request.perform().then((_res) => {
                 _resolve(_res);
+            }).catch((_e) => {
+                _reject(_e);
             });
         });
     }

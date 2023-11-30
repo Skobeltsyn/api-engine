@@ -85,7 +85,7 @@ export default class FetchRequest {
         return headers;
     }
 
-    perform():Promise<any> {
+    async perform():Promise<any> {
         let me = this;
         return new Promise((resolve, reject) => {
             me.amountOfTries += 1;
@@ -108,7 +108,10 @@ export default class FetchRequest {
                 }
                 resolve(_res);
             }).catch((e) => {
+                console.log("Caught error");
+                console.log(e);
                 me.amountOfTries += 1;
+                console.log("Rejecting");
                 reject(e);
             });
         });
