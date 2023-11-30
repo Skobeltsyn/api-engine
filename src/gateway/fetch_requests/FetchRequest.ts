@@ -92,6 +92,11 @@ export default class FetchRequest {
             let data = {... me.data};
             data.headers = this.generateHeaders();
             return fetch(this.url, data).then((e: Response) => {
+                if (!e.ok) {
+                    me.amountOfTries += 1;
+                    reject(e);
+                    return;
+                }
                 if (me.isBlob) {
                     return e.blob();
                 }
