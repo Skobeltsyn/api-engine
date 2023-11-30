@@ -144,7 +144,7 @@ export default class ApiEngine {
         });
     }
 
-    asyncFetchWithoutQueing(_url:string, _dataToSend: any) {
+    asyncFetchWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0) {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`);
 
@@ -155,7 +155,7 @@ export default class ApiEngine {
                 }
             }
 
-            let request = new FetchRequest(url, _dataToSend, this.sessionContainer, 0, null, _url);
+            let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
             request.perform().then((_res) => {
                 _resolve(_res);
             });
