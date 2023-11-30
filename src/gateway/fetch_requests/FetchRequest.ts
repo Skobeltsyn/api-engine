@@ -101,11 +101,7 @@ export default class FetchRequest {
                     return e.blob();
                 }
                 return e.json()
-            }).catch((e) => {
-                me.amountOfTries += 1;
-                reject(e);
-            })
-              .then((_res) => {
+            }).then((_res) => {
                 if (_res) {
                     if (me.sessionContainer.jwtContainer)
                         if (_res.csrf) me.sessionContainer.jwtContainer.csrf = _res.csrf;
