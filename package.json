@@ -1,6 +1,6 @@
 {
   "name": "api-engine",
-  "version": "0.0.746",
+  "version": "0.0.756",
   "description": "API engine for async fetching",
   "main": "index.ts",
   "scripts": {
