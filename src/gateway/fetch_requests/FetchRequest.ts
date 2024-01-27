@@ -68,13 +68,11 @@ export default class FetchRequest {
         if (!jwtContainer) {
             headers = {
                 'Accept': 'application/json',
-                "Content-type": 'application/json',
                 "mode": 'cors'
             } as any;
         } else {
             headers = {
                 'Accept': 'application/json',
-                "Content-type": 'application/json',
                 "mode": 'cors',
                 "Authorization": jwtContainer.content,
                 "csrf": jwtContainer.csrf
