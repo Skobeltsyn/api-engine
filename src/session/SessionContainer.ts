@@ -74,6 +74,11 @@ export default class SessionContainer<UserClass> {
         if (!me.apiEngine) throw new Error("Не задан API Engine");
         console.log("checkUser");
         return new Promise((resolve, reject) => {
+            if (!me._jwtContainer) {
+                console.error("No JWT");
+                reject("No JWT");
+                return;
+            }
             console.log("Sending request");
             me.apiEngine.asyncFetch(me.meUrl, {}).then((e: any) => {
                 console.log("Sending request");
@@ -82,11 +87,7 @@ export default class SessionContainer<UserClass> {
                     reject("Empty answer");
                     return;
                 }
-                if (!me._jwtContainer) {
-                    console.error("No JWT");
-                    reject("No JWT");
-                    return;
-                }
+
 
                 if (e || me._jwtContainer) {
                     // me._currentUser = (new me.userClassAsObject(e.uuid)) as UserClass;
