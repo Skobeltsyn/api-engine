@@ -91,6 +91,7 @@ export default class FetchRequest {
             me.amountOfTries += 1;
             let data = {... me.data};
             data.headers = this.generateHeaders();
+            console.log(this.url);
             return fetch(this.url, data).then((e: Response) => {
                 if (!e.ok) {
                     me.amountOfTries += 1;
