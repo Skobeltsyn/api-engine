@@ -165,7 +165,6 @@ export default class ApiEngine {
     async asyncFetchBlobWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0):Promise<any> {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
-
         return new Promise<any>((_resolve, _reject) => {
             if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
                 if (me.canUseOutsideLinks) {
