@@ -41,15 +41,17 @@ export default class FetchRequest {
 
     generateContentTypetData() {
         let result = "application/json";
+        // console.log(this.data.body.constructor);
         if (this.data.body && this.data.body.constructor === FormData) {
             result = "multipart/form-data";
-            return null;
+            console.log("Making form data");
+            return undefined; //Я был не бухой, там реал косяк
         }
         return result;
     }
     generateAnonymousHeaders() {
         let headers = {
-            'Accept': 'application/json',
+            'Accept': '*/*',
             "mode": 'cors',
         } as any;
         let contentType = this.generateContentTypetData();
@@ -67,12 +69,12 @@ export default class FetchRequest {
         let headers = {} as any;
         if (!jwtContainer) {
             headers = {
-                'Accept': 'application/json',
+                'Accept': '*/*',
                 "mode": 'cors'
             } as any;
         } else {
             headers = {
-                'Accept': 'application/json',
+                'Accept': '*/*',
                 "mode": 'cors',
                 "Authorization": jwtContainer.content,
                 "csrf": jwtContainer.csrf
