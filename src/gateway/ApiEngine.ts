@@ -148,7 +148,7 @@ export default class ApiEngine {
         let me = this;
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
 
-        return new Promise((_resolve) => {
+        return new Promise((_resolve, _reject) => {
             if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
                 if (me.canUseOutsideLinks) {
                     url = new URL(_url.replace(/([^:]\/)\/+/g, "$1"));
@@ -158,6 +158,8 @@ export default class ApiEngine {
             let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
             request.perform().then((_res) => {
                 _resolve(_res);
+            }, (_err) => {
+                _reject(_err);
             });
         });
     }
