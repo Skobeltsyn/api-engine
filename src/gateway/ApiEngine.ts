@@ -7,6 +7,7 @@ import WebsocketConnector from "./websockets/WebsocketConnector";
 import NullWebsocketConnector from "./websockets/NullWebsocketConnector";
 
 export default class ApiEngine {
+    private testFetches: any[] = [];
 
     get websocketConnector(): WebsocketConnector {
         return this._websocketConnector;
@@ -61,6 +62,8 @@ export default class ApiEngine {
 
         this.asyncFetchBlobWithoutQueing = this.asyncFetchBlobWithoutQueing.bind(this);
         this.corsFetch = this.corsFetch.bind(this);
+        this.testFetch = this.testFetch.bind(this);
+        this.testFetchAndFail = this.testFetchAndFail.bind(this);
 
         this._canUseOutsideLinks = false;
 
@@ -105,6 +108,20 @@ export default class ApiEngine {
 
     asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number) {
         const me = this;
+        if (me.testFetches.length > 0) {
+            const testFetch = me.testFetches.pop();
+            return new Promise((_resolve, _reject) => {
+               if (testFetch.resolve) {
+                   setTimeout(() => {
+                    _resolve(testFetch.result);
+                   }, testFetch.timeToAnswerInMs);
+               } else {
+                   setTimeout(() => {
+                       _reject(testFetch.result);
+                   }, testFetch.timeToAnswerInMs);
+               }
+            });
+        }
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
         if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
             if (me.canUseOutsideLinks) {
@@ -144,22 +161,18 @@ export default class ApiEngine {
         });
     }
 
-    testFetch(_url: string, _dataToSend: any, _expectedResult: any, _timeToAnswerInMs: number) {
+    testFetch(_expectedResult: any, _timeToAnswerInMs: number) {
         const me = this;
-        return new Promise((_resolve, _reject) => {
-           setTimeout(() => {
-               _resolve(_expectedResult);
-           }, _timeToAnswerInMs);
-        });
+        me.testFetches.push({
+            resolve: true, result: _expectedResult, timeToAnswerInMs: _timeToAnswerInMs
+        })
     }
 
-    testFetchAndFail(_url: string, _dataToSend: any, _expectedFail: any, _timeToAnswerInMs: number) {
+    testFetchAndFail(_expectedFail: any, _timeToAnswerInMs: number) {
         const me = this;
-        return new Promise((_resolve, _reject) => {
-            setTimeout(() => {
-                _reject(_expectedFail);
-            }, _timeToAnswerInMs);
-        });
+        me.testFetches.push({
+            resolve: true, result: _expectedFail, timeToAnswerInMs: _timeToAnswerInMs
+        })
     }
 
     asyncFetchWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0) {
