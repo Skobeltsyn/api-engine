@@ -70,7 +70,7 @@ export default class ApiEngine {
     }
 
     startQueue() {
-        let me = this;
+        const me = this;
         console.log("Starting queing process");
         if (!this.requestsQueue) {
             console.log("Creating queue");
@@ -104,7 +104,7 @@ export default class ApiEngine {
     }
 
     asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number) {
-        let me = this;
+        const me = this;
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
         if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
             if (me.canUseOutsideLinks) {
@@ -144,8 +144,26 @@ export default class ApiEngine {
         });
     }
 
+    testFetch(_url: string, _dataToSend: any, _expectedResult: any, _timeToAnswerInMs: number) {
+        const me = this;
+        return new Promise((_resolve, _reject) => {
+           setTimeout(() => {
+               _resolve(_expectedResult);
+           }, _timeToAnswerInMs);
+        });
+    }
+
+    testFetchAndFail(_url: string, _dataToSend: any, _expectedFail: any, _timeToAnswerInMs: number) {
+        const me = this;
+        return new Promise((_resolve, _reject) => {
+            setTimeout(() => {
+                _reject(_expectedFail);
+            }, _timeToAnswerInMs);
+        });
+    }
+
     asyncFetchWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0) {
-        let me = this;
+        const me = this;
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
 
         return new Promise((_resolve, _reject) => {
@@ -165,7 +183,7 @@ export default class ApiEngine {
     }
 
     async asyncFetchBlobWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0):Promise<any> {
-        let me = this;
+        const me = this;
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
         return new Promise<any>((_resolve, _reject) => {
             if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
@@ -190,7 +208,7 @@ export default class ApiEngine {
     }
 
     whatsWrong() {
-        let me = this;
+        const me = this;
         return new Promise((resolve, reject) => {
             let reason = "";
             if (!me.requestsQueue) reason += "Не инициализировано requestsQueue;";
