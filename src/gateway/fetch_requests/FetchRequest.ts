@@ -39,7 +39,7 @@ export default class FetchRequest {
         return this.generateHeadersWithAuthorization();
     }
 
-    generateContentTypetData() {
+    generateContentTypeData() {
         let result = "application/json";
         // console.log(this.data.body.constructor);
         if (this.data.body && this.data.body.constructor === FormData) {
@@ -49,13 +49,19 @@ export default class FetchRequest {
         }
         return result;
     }
+
+    /** @deprecated Typo'd alias, use generateContentTypeData. */
+    generateContentTypetData() {
+        return this.generateContentTypeData();
+    }
+
     generateAnonymousHeaders() {
         let headers = {
             'Accept': '*/*',
         } as any;
-        let contentType = this.generateContentTypetData();
+        let contentType = this.generateContentTypeData();
         if (contentType) {
-            headers['Content-Type'] = this.generateContentTypetData();
+            headers['Content-Type'] = contentType;
         }
         return headers;
     }
@@ -77,9 +83,9 @@ export default class FetchRequest {
                 "csrf": jwtContainer.csrf
             } as any;
         }
-        let contentType = this.generateContentTypetData();
+        let contentType = this.generateContentTypeData();
         if (contentType) {
-            headers['Content-Type'] = this.generateContentTypetData();
+            headers['Content-Type'] = contentType;
         }
         return headers;
     }
