@@ -76,11 +76,11 @@ export default class RequestsQueue {
                 clearTimeout(me.timeoutForUpdate);
                 me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);
                 // if (me.chatApp.sessionContainer.jwtContainer)
-                if (request.sessionContainer.jwtContainer) {
+                if (_res && request.sessionContainer.jwtContainer) {
                     if (_res.csrf) request.sessionContainer.jwtContainer.csrf = _res.csrf;
                 }
                 if (request.cacheContainer) {
-                    if (!_res.do_not_cache_me)
+                    if (!_res || !_res.do_not_cache_me)
                         request.cacheContainer.setKey(request.cacheKey, _res);
                 }
                 me.activeRequest = null;
