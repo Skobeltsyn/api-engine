@@ -22,6 +22,7 @@ export default class FetchRequest {
     isBlob?: boolean;
     signal?: AbortSignal;
     hooks?: ApiEngineHooks;
+    private authRetried: boolean = false;
     private _priority: number;
 
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
@@ -98,13 +99,12 @@ export default class FetchRequest {
     }
 
     async perform():Promise<any> {
-        let me = this;
+        const me = this;
         return new Promise(async (resolve, reject) => {
             const rejectWith = async (err: unknown) => {
                 if (me.hooks?.transformError) {
                     try {
-                        const transformed = await me.hooks.transformError(err);
-                        reject(transformed);
+                        reject(await me.hooks.transformError(err));
                         return;
                     } catch (hookErr) {
                         reject(hookErr);
@@ -114,56 +114,57 @@ export default class FetchRequest {
                 reject(err);
             };
 
-            me.amountOfTries += 1;
-            if (me.signal?.aborted) {
-                await rejectWith(new ApiEngineError("cancelled", "Request aborted before dispatch."));
-                return;
-            }
-            let data: RequestInit = {... me.data};
-            data.headers = this.generateHeaders();
-            if (data.mode === undefined) data.mode = 'cors';
-            if (me.signal && data.signal === undefined) data.signal = me.signal;
+            try {
+                me.amountOfTries += 1;
+                if (me.signal?.aborted) {
+                    await rejectWith(new ApiEngineError("cancelled", "Request aborted before dispatch."));
+                    return;
+                }
+                let data: RequestInit = {... me.data};
+                data.headers = me.generateHeaders();
+                if (data.mode === undefined) data.mode = 'cors';
+                if (me.signal && data.signal === undefined) data.signal = me.signal;
 
-            if (me.hooks?.beforeRequest) {
-                try {
+                if (me.hooks?.beforeRequest) {
                     const result = await me.hooks.beforeRequest(data, me.url);
                     if (result !== undefined) data = result;
-                } catch (hookErr) {
-                    await rejectWith(hookErr);
-                    return;
                 }
-            }
 
-            log(this.url);
-            return fetch(this.url, data).then((e: Response) => {
-                if (!e.ok) {
-                    rejectWith(e);
+                log(me.url);
+                let response = await fetch(me.url, data);
+
+                if (response.status === 401 && me.hooks?.onAuthFailure && !me.authRetried) {
+                    me.authRetried = true;
+                    await me.hooks.onAuthFailure(data, response);
+                    // Re-issue once with regenerated headers (JWT may have changed).
+                    const retryData: RequestInit = {... me.data};
+                    retryData.headers = me.generateHeaders();
+                    if (retryData.mode === undefined) retryData.mode = 'cors';
+                    if (me.signal && retryData.signal === undefined) retryData.signal = me.signal;
+                    response = await fetch(me.url, retryData);
+                    data = retryData;
+                }
+
+                if (!response.ok) {
+                    await rejectWith(response);
                     return;
                 }
-                if (me.isBlob) {
-                    return e.blob();
-                }
-                return e.json()
-            }).then(async (_res) => {
-                if (_res === undefined) return;
+
+                const _res = me.isBlob ? await response.blob() : await response.json();
                 if (_res) {
-                    if (me.sessionContainer.jwtContainer)
-                        if (_res.csrf) me.sessionContainer.jwtContainer.csrf = _res.csrf;
-                }
-                let final = _res;
-                if (me.hooks?.transformResponse) {
-                    try {
-                        final = await me.hooks.transformResponse(_res, data);
-                    } catch (hookErr) {
-                        await rejectWith(hookErr);
-                        return;
+                    if (me.sessionContainer.jwtContainer && (_res as any).csrf) {
+                        me.sessionContainer.jwtContainer.csrf = (_res as any).csrf;
                     }
                 }
+                let final: any = _res;
+                if (me.hooks?.transformResponse) {
+                    final = await me.hooks.transformResponse(_res, data);
+                }
                 resolve(final);
-            }).catch(async (e) => {
+            } catch (e) {
                 log("Caught error", e);
                 await rejectWith(e);
-            });
+            }
         });
     }
 

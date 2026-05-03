@@ -77,6 +77,9 @@ export default class ApiEngine {
     get transformError(): ApiEngineHooks["transformError"] { return this.hooks.transformError; }
     set transformError(v: ApiEngineHooks["transformError"]) { this.hooks.transformError = v; }
 
+    get onAuthFailure(): ApiEngineHooks["onAuthFailure"] { return this.hooks.onAuthFailure; }
+    set onAuthFailure(v: ApiEngineHooks["onAuthFailure"]) { this.hooks.onAuthFailure = v; }
+
     private _listeners: { [k in ApiEngineEvent]?: Array<(payload: ApiEngineEventPayload) => void> } = {};
 
     on(event: ApiEngineEvent, handler: (payload: ApiEngineEventPayload) => void): void {
