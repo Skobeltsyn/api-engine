@@ -96,24 +96,24 @@ export default class ApiEngine {
         }
     }
 
-    asyncFetch(_url:string, _dataToSend: any) {
-        return this.asyncFetchWithRetries(_url, _dataToSend, 5, false, 0);
+    asyncFetch<T = any>(_url:string, _dataToSend: any): Promise<T> {
+        return this.asyncFetchWithRetries<T>(_url, _dataToSend, 5, false, 0);
     }
 
-    asyncFetchWithCache(_url:string, _dataToSend: any) {
+    asyncFetchWithCache<T = any>(_url:string, _dataToSend: any): Promise<T> {
         log("Using cache");
-        return this.prioritizedAsyncFetchWithCache(_url, _dataToSend, 0);
+        return this.prioritizedAsyncFetchWithCache<T>(_url, _dataToSend, 0);
     }
 
-    prioritizedAsyncFetchWithCache(_url:string, _dataToSend: any, _priority: number) {
+    prioritizedAsyncFetchWithCache<T = any>(_url:string, _dataToSend: any, _priority: number): Promise<T> {
         log(`Checking for key ${_url}`);
         let cachedData = this.cacheContainer.getKey(_url);
         if (cachedData)
-            return new Promise((_resolve) => {
-                _resolve(cachedData);
+            return new Promise<T>((_resolve) => {
+                _resolve(cachedData as T);
             });
 
-        return this.asyncFetchWithRetries(_url, _dataToSend, 5, true, _priority);
+        return this.asyncFetchWithRetries<T>(_url, _dataToSend, 5, true, _priority);
     }
 
     private buildUrlOrReject(_url: string): URL | ApiEngineError {
@@ -132,14 +132,14 @@ export default class ApiEngine {
         }
     }
 
-    asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number) {
+    asyncFetchWithRetries<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number): Promise<T> {
         const me = this;
         if (me.testFetches.length > 0) {
-            const testFetch = me.testFetches.pop();
-            return new Promise((_resolve, _reject) => {
+            const testFetch = me.testFetches.pop()!;
+            return new Promise<T>((_resolve, _reject) => {
                if (testFetch.resolve) {
                    setTimeout(() => {
-                    _resolve(testFetch.result);
+                    _resolve(testFetch.result as T);
                    }, testFetch.timeToAnswerInMs);
                } else {
                    setTimeout(() => {
@@ -150,22 +150,22 @@ export default class ApiEngine {
         }
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
-        if (!me.requestsQueue) return me.whatsWrong();
+        if (!me.requestsQueue) return me.whatsWrong() as Promise<T>;
         let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
         request.priority = _priority;
         me.requestsQueue.push(request);
-        return request.make();
+        return request.make() as Promise<T>;
     }
 
-    corsFetch(
+    corsFetch<T = any>(
         _command: string,
         _params: any,
         _isBlob: boolean,
         _sendUrl: string,
         _ticketCheckEndPoint: string,
         _updateCallback: undefined | ((_res: string) => void) = undefined
-    ) {
-        return new Promise((_resolve, _reject) => {
+    ): Promise<T> {
+        return new Promise<T>((_resolve, _reject) => {
             let cqrsCommand = new CQRSCommand(
                 _command,
                 _params,
@@ -177,7 +177,7 @@ export default class ApiEngine {
                 _updateCallback
             );
 
-            cqrsCommand.makeRequest().then(_resolve, _reject);
+            cqrsCommand.makeRequest().then((res) => _resolve(res as T), _reject);
         });
     }
 
@@ -195,13 +195,13 @@ export default class ApiEngine {
         })
     }
 
-    asyncFetchWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0) {
+    asyncFetchWithoutQueing<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0): Promise<T> {
         const me = this;
         if (me.testFetches.length > 0) {
-            const testFetch = me.testFetches.pop();
-            return new Promise((_resolve, _reject) => {
+            const testFetch = me.testFetches.pop()!;
+            return new Promise<T>((_resolve, _reject) => {
                 setTimeout(
-                    () => (testFetch.resolve ? _resolve(testFetch.result) : _reject(testFetch.result)),
+                    () => (testFetch.resolve ? _resolve(testFetch.result as T) : _reject(testFetch.result)),
                     testFetch.timeToAnswerInMs,
                 );
             });
@@ -209,35 +209,35 @@ export default class ApiEngine {
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
 
-        return new Promise((_resolve, _reject) => {
+        return new Promise<T>((_resolve, _reject) => {
             let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
             request.perform().then((_res) => {
-                _resolve(_res);
+                _resolve(_res as T);
             }, (_err) => {
                 _reject(_err);
             });
         });
     }
 
-    async asyncFetchBlobWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0):Promise<any> {
+    async asyncFetchBlobWithoutQueing<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0):Promise<T> {
         const me = this;
         if (me.testFetches.length > 0) {
-            const testFetch = me.testFetches.pop();
-            return new Promise<any>((_resolve, _reject) => {
+            const testFetch = me.testFetches.pop()!;
+            return new Promise<T>((_resolve, _reject) => {
                 setTimeout(
-                    () => (testFetch.resolve ? _resolve(testFetch.result) : _reject(testFetch.result)),
+                    () => (testFetch.resolve ? _resolve(testFetch.result as T) : _reject(testFetch.result)),
                     testFetch.timeToAnswerInMs,
                 );
             });
         }
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
-        return new Promise<any>((_resolve, _reject) => {
+        return new Promise<T>((_resolve, _reject) => {
             let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
             request.isBlob = true;
 
             request.perform().then((_res) => {
-                _resolve(_res);
+                _resolve(_res as T);
             }).catch((_e) => {
                 _reject(_e);
             });
