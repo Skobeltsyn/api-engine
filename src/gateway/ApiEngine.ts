@@ -175,6 +175,15 @@ export default class ApiEngine {
 
     asyncFetchWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0) {
         const me = this;
+        if (me.testFetches.length > 0) {
+            const testFetch = me.testFetches.pop();
+            return new Promise((_resolve, _reject) => {
+                setTimeout(
+                    () => (testFetch.resolve ? _resolve(testFetch.result) : _reject(testFetch.result)),
+                    testFetch.timeToAnswerInMs,
+                );
+            });
+        }
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
 
         return new Promise((_resolve, _reject) => {
@@ -195,6 +204,15 @@ export default class ApiEngine {
 
     async asyncFetchBlobWithoutQueing(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0):Promise<any> {
         const me = this;
+        if (me.testFetches.length > 0) {
+            const testFetch = me.testFetches.pop();
+            return new Promise<any>((_resolve, _reject) => {
+                setTimeout(
+                    () => (testFetch.resolve ? _resolve(testFetch.result) : _reject(testFetch.result)),
+                    testFetch.timeToAnswerInMs,
+                );
+            });
+        }
         let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
         return new Promise<any>((_resolve, _reject) => {
             if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
