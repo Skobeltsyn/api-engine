@@ -96,16 +96,16 @@ export default class ApiEngine {
         }
     }
 
-    asyncFetch<T = any>(_url:string, _dataToSend: any): Promise<T> {
-        return this.asyncFetchWithRetries<T>(_url, _dataToSend, 5, false, 0);
+    asyncFetch<T = any>(_url:string, _dataToSend: any, _signal?: AbortSignal): Promise<T> {
+        return this.asyncFetchWithRetries<T>(_url, _dataToSend, 5, false, 0, _signal);
     }
 
-    asyncFetchWithCache<T = any>(_url:string, _dataToSend: any): Promise<T> {
+    asyncFetchWithCache<T = any>(_url:string, _dataToSend: any, _signal?: AbortSignal): Promise<T> {
         log("Using cache");
-        return this.prioritizedAsyncFetchWithCache<T>(_url, _dataToSend, 0);
+        return this.prioritizedAsyncFetchWithCache<T>(_url, _dataToSend, 0, _signal);
     }
 
-    prioritizedAsyncFetchWithCache<T = any>(_url:string, _dataToSend: any, _priority: number): Promise<T> {
+    prioritizedAsyncFetchWithCache<T = any>(_url:string, _dataToSend: any, _priority: number, _signal?: AbortSignal): Promise<T> {
         log(`Checking for key ${_url}`);
         let cachedData = this.cacheContainer.getKey(_url);
         if (cachedData)
@@ -113,7 +113,7 @@ export default class ApiEngine {
                 _resolve(cachedData as T);
             });
 
-        return this.asyncFetchWithRetries<T>(_url, _dataToSend, 5, true, _priority);
+        return this.asyncFetchWithRetries<T>(_url, _dataToSend, 5, true, _priority, _signal);
     }
 
     private buildUrlOrReject(_url: string): URL | ApiEngineError {
@@ -132,7 +132,7 @@ export default class ApiEngine {
         }
     }
 
-    asyncFetchWithRetries<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number): Promise<T> {
+    asyncFetchWithRetries<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number, _signal?: AbortSignal): Promise<T> {
         const me = this;
         if (me.testFetches.length > 0) {
             const testFetch = me.testFetches.pop()!;
@@ -151,7 +151,7 @@ export default class ApiEngine {
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         if (!me.requestsQueue) return me.whatsWrong() as Promise<T>;
-        let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
+        let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url, _signal);
         request.priority = _priority;
         me.requestsQueue.push(request);
         return request.make() as Promise<T>;
@@ -195,7 +195,7 @@ export default class ApiEngine {
         })
     }
 
-    asyncFetchWithoutQueing<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0): Promise<T> {
+    asyncFetchWithoutQueing<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0, _signal?: AbortSignal): Promise<T> {
         const me = this;
         if (me.testFetches.length > 0) {
             const testFetch = me.testFetches.pop()!;
@@ -210,7 +210,7 @@ export default class ApiEngine {
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
 
         return new Promise<T>((_resolve, _reject) => {
-            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
+            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal);
             request.perform().then((_res) => {
                 _resolve(_res as T);
             }, (_err) => {
@@ -219,7 +219,7 @@ export default class ApiEngine {
         });
     }
 
-    async asyncFetchBlobWithoutQueing<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0):Promise<T> {
+    async asyncFetchBlobWithoutQueing<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject=0, _signal?: AbortSignal):Promise<T> {
         const me = this;
         if (me.testFetches.length > 0) {
             const testFetch = me.testFetches.pop()!;
@@ -233,7 +233,7 @@ export default class ApiEngine {
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         return new Promise<T>((_resolve, _reject) => {
-            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
+            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal);
             request.isBlob = true;
 
             request.perform().then((_res) => {

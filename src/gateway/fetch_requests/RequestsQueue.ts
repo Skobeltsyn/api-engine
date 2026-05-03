@@ -1,6 +1,7 @@
 import FetchRequest from "./FetchRequest";
 import ApiEngine from "../ApiEngine";
 import { log } from "../../util/Log";
+import ApiEngineError from "../../models/ApiEngineError";
 
 export default class RequestsQueue {
     private requestsFetchingRate: number;
@@ -69,6 +70,12 @@ export default class RequestsQueue {
         if (request === undefined || request === null) {
             clearTimeout(this.timeoutForUpdate);
             this.timeoutForUpdate = setTimeout(() => { me.processRequest(); }, me.requestsFetchingRate);
+            return;
+        }
+        if (request.signal?.aborted) {
+            if (request.madeReject) request.madeReject(new ApiEngineError("cancelled", "Request aborted before dispatch."));
+            clearTimeout(me.timeoutForUpdate);
+            me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);
             return;
         }
         me.requestsNumber += 1;

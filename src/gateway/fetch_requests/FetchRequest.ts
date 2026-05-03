@@ -1,6 +1,7 @@
 import SessionContainer from "../../session/SessionContainer";
 import CacheContainer from "../../models/CacheContainer";
 import { log } from "../../util/Log";
+import ApiEngineError from "../../models/ApiEngineError";
 
 export default class FetchRequest {
     get priority(): number {
@@ -18,12 +19,13 @@ export default class FetchRequest {
     cacheContainer: CacheContainer | null;
     cacheKey: string | null;
     isBlob?: boolean;
+    signal?: AbortSignal;
     private _priority: number;
 
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
     madeReject?: (value: (PromiseLike<unknown> | unknown)) => void;
 
-    constructor(_url: URL, _data: RequestInit, _sessionContainer: SessionContainer<any>, _numOfRetriesBeforeReject: number, _cacheContainer: CacheContainer | null, _cacheKey: string | null) {
+    constructor(_url: URL, _data: RequestInit, _sessionContainer: SessionContainer<any>, _numOfRetriesBeforeReject: number, _cacheContainer: CacheContainer | null, _cacheKey: string | null, _signal?: AbortSignal) {
         this.numOfRetriesBeforeReject = _numOfRetriesBeforeReject;
         this.url = _url;
         this.cacheKey = _cacheKey;
@@ -31,6 +33,7 @@ export default class FetchRequest {
         this.sessionContainer = _sessionContainer;
         this.amountOfTries = 0;
         this.cacheContainer = _cacheContainer;
+        this.signal = _signal;
         this._priority = 0;
 
         this.generateHeadersWithAuthorization = this.generateHeadersWithAuthorization.bind(this);
@@ -95,9 +98,14 @@ export default class FetchRequest {
         let me = this;
         return new Promise((resolve, reject) => {
             me.amountOfTries += 1;
+            if (me.signal?.aborted) {
+                reject(new ApiEngineError("cancelled", "Request aborted before dispatch."));
+                return;
+            }
             const data: RequestInit = {... me.data};
             data.headers = this.generateHeaders();
             if (data.mode === undefined) data.mode = 'cors';
+            if (me.signal && data.signal === undefined) data.signal = me.signal;
             log(this.url);
             return fetch(this.url, data).then((e: Response) => {
                 if (!e.ok) {
