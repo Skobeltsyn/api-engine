@@ -71,6 +71,9 @@ export default class ApiEngine {
     get beforeRequest(): ApiEngineHooks["beforeRequest"] { return this.hooks.beforeRequest; }
     set beforeRequest(v: ApiEngineHooks["beforeRequest"]) { this.hooks.beforeRequest = v; }
 
+    get transformResponse(): ApiEngineHooks["transformResponse"] { return this.hooks.transformResponse; }
+    set transformResponse(v: ApiEngineHooks["transformResponse"]) { this.hooks.transformResponse = v; }
+
     private _listeners: { [k in ApiEngineEvent]?: Array<(payload: ApiEngineEventPayload) => void> } = {};
 
     on(event: ApiEngineEvent, handler: (payload: ApiEngineEventPayload) => void): void {

@@ -130,12 +130,21 @@ export default class FetchRequest {
                     return e.blob();
                 }
                 return e.json()
-            }).then((_res) => {
+            }).then(async (_res) => {
                 if (_res) {
                     if (me.sessionContainer.jwtContainer)
                         if (_res.csrf) me.sessionContainer.jwtContainer.csrf = _res.csrf;
                 }
-                resolve(_res);
+                let final = _res;
+                if (me.hooks?.transformResponse) {
+                    try {
+                        final = await me.hooks.transformResponse(_res, data);
+                    } catch (hookErr) {
+                        reject(hookErr);
+                        return;
+                    }
+                }
+                resolve(final);
             }).catch((e) => {
                 log("Caught error", e);
                 reject(e);
