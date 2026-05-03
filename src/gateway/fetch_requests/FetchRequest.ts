@@ -12,7 +12,7 @@ export default class FetchRequest {
     }
     numOfRetriesBeforeReject: number;
     url: URL;
-    data: any;
+    data: RequestInit;
     amountOfTries: number;
     sessionContainer: SessionContainer<any>;
     cacheContainer: CacheContainer | null;
@@ -23,7 +23,7 @@ export default class FetchRequest {
     madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
     madeReject?: (value: (PromiseLike<unknown> | unknown)) => void;
 
-    constructor(_url: URL, _data: any, _sessionContainer: SessionContainer<any>, _numOfRetriesBeforeReject: number, _cacheContainer: CacheContainer | null, _cacheKey: string | null) {
+    constructor(_url: URL, _data: RequestInit, _sessionContainer: SessionContainer<any>, _numOfRetriesBeforeReject: number, _cacheContainer: CacheContainer | null, _cacheKey: string | null) {
         this.numOfRetriesBeforeReject = _numOfRetriesBeforeReject;
         this.url = _url;
         this.cacheKey = _cacheKey;
@@ -42,7 +42,8 @@ export default class FetchRequest {
 
     generateContentTypeData() {
         let result = "application/json";
-        if (this.data.body && this.data.body.constructor === FormData) {
+        const body = this.data.body;
+        if (body && (body as object).constructor === FormData) {
             result = "multipart/form-data";
             log("Making form data");
             return undefined;
@@ -94,7 +95,7 @@ export default class FetchRequest {
         let me = this;
         return new Promise((resolve, reject) => {
             me.amountOfTries += 1;
-            let data = {... me.data};
+            const data: RequestInit = {... me.data};
             data.headers = this.generateHeaders();
             if (data.mode === undefined) data.mode = 'cors';
             log(this.url);
