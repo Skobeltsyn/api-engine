@@ -90,11 +90,12 @@ export default class RequestsQueue {
         }
         me.requestsNumber += 1;
         me.activeRequest = request;
+        const cacheKeyForEvent = request.cacheKey || String(request.url);
+        me.apiEngine.emit("request_started", { url: cacheKeyForEvent, attempt: request.amountOfTries + 1 });
         request.perform().then((_res) => {
             if (request !== null && request !== undefined && request.madeResolve) {
                 clearTimeout(me.timeoutForUpdate);
                 me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate);
-                // if (me.chatApp.sessionContainer.jwtContainer)
                 if (_res && request.sessionContainer.jwtContainer) {
                     if (_res.csrf) request.sessionContainer.jwtContainer.csrf = _res.csrf;
                 }
@@ -103,6 +104,7 @@ export default class RequestsQueue {
                         request.cacheContainer.setKey(request.cacheKey, _res);
                 }
                 me.activeRequest = null;
+                me.apiEngine.emit("request_succeeded", { url: cacheKeyForEvent, attempt: request.amountOfTries });
                 request.madeResolve(_res);
             }
         }, (_err) => {
@@ -120,15 +122,16 @@ export default class RequestsQueue {
 
     resqueWrongRequest(_request: FetchRequest, _err: any):void {
         let me = this;
-        // console.log("One more time");
+        const url = _request.cacheKey || String(_request.url);
         if (_request && (_request.amountOfTries < _request.numOfRetriesBeforeReject)) {
+            me.apiEngine.emit("request_retried", { url, attempt: _request.amountOfTries, error: _err });
             me.push(_request);
             clearTimeout(me.timeoutForUpdate);
-            me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate + 2000); //TODO: убрать хардкод с восстановления
+            me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate + 2000);
         } else{
-            // console.log("Прекращаем");
             clearTimeout(me.timeoutForUpdate);
             me.timeoutForUpdate = setTimeout(me.processRequest, me.requestsFetchingRate + 2000);
+            me.apiEngine.emit("request_failed", { url, attempt: _request.amountOfTries, error: _err });
             if (_request.madeReject) _request.madeReject(_err);
         }
     }

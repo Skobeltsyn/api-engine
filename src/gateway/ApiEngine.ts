@@ -9,6 +9,18 @@ import ApiEngineError from "../models/ApiEngineError";
 import { setDebug, log } from "../util/Log";
 import TestFetch from "./TestFetch";
 
+export type ApiEngineEvent =
+    | "request_started"
+    | "request_succeeded"
+    | "request_failed"
+    | "request_retried";
+
+export interface ApiEngineEventPayload {
+    url: string;
+    attempt: number;
+    error?: unknown;
+}
+
 export default class ApiEngine {
     private testFetches: TestFetch[] = [];
 
@@ -50,6 +62,27 @@ export default class ApiEngine {
     set debug(value: boolean) {
         this._debug = value;
         setDebug(value);
+    }
+
+    private _listeners: { [k in ApiEngineEvent]?: Array<(payload: ApiEngineEventPayload) => void> } = {};
+
+    on(event: ApiEngineEvent, handler: (payload: ApiEngineEventPayload) => void): void {
+        (this._listeners[event] ||= []).push(handler);
+    }
+
+    off(event: ApiEngineEvent, handler: (payload: ApiEngineEventPayload) => void): void {
+        const arr = this._listeners[event];
+        if (!arr) return;
+        const idx = arr.indexOf(handler);
+        if (idx > -1) arr.splice(idx, 1);
+    }
+
+    emit(event: ApiEngineEvent, payload: ApiEngineEventPayload): void {
+        const arr = this._listeners[event];
+        if (!arr) return;
+        for (const h of arr.slice()) {
+            try { h(payload); } catch (e) { /* ignore handler errors */ }
+        }
     }
 
     constructor(_serverUrl: string,
