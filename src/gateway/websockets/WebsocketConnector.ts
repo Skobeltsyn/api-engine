@@ -11,6 +11,7 @@ export default class WebsocketConnector {
   usedChannels: Set<string>;
   alive: boolean = false;
   connecting: boolean = false;
+  connectMessageBuilder?: () => unknown;
 
   constructor(_url: string, _api: ApiEngine) {
     this.url = _url;
@@ -79,13 +80,15 @@ export default class WebsocketConnector {
       return;
     }
     try {
-      // alert(4);
-      let message = JSON.stringify({
-        title: "connect",
-        session_id: me.api.sessionContainer.currentEntity.peer_id,
-        user_id: me.api.sessionContainer.currentEntity.id,
-        conferenceId: me.api.sessionContainer.currentEntity.conferenceId
-      });
+      const payload = me.connectMessageBuilder
+        ? me.connectMessageBuilder()
+        : {
+            title: "connect",
+            session_id: me.api.sessionContainer.currentEntity.peer_id,
+            user_id: me.api.sessionContainer.currentEntity.id,
+            conferenceId: me.api.sessionContainer.currentEntity.conferenceId
+          };
+      const message = JSON.stringify(payload);
       me.sendMessage(message);
       // alert(5);
       me.needToReconnect = false;
