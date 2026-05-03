@@ -153,8 +153,9 @@ export default class ApiEngine {
         if (!me.requestsQueue) return me.whatsWrong() as Promise<T>;
         let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url, _signal);
         request.priority = _priority;
+        const promise = request.make() as Promise<T>;
         me.requestsQueue.push(request);
-        return request.make() as Promise<T>;
+        return promise;
     }
 
     corsFetch<T = any>(

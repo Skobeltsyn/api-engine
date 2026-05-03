@@ -4,6 +4,7 @@ export default class CacheContainer {
   storageName: string;
   quickStorage: string;
   persistent: boolean;
+  public maxEntries: number = Infinity;
 
   constructor(_storageName: string) {
     this.storageName = _storageName;
@@ -51,6 +52,13 @@ export default class CacheContainer {
     else
       data = `${this.quickStorage}`;
     if (data) wroteData = JSON.parse(data);
+    if (!Object.prototype.hasOwnProperty.call(wroteData, _key) && Number.isFinite(this.maxEntries)) {
+      const keys = Object.keys(wroteData);
+      while (keys.length >= this.maxEntries) {
+        const oldest = keys.shift();
+        if (oldest !== undefined) delete wroteData[oldest];
+      }
+    }
     wroteData[_key] = _content;
     if (this.persistent)
       localStorage.setItem(this.getStorageKey(), JSON.stringify(wroteData));

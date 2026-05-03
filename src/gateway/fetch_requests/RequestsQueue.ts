@@ -11,6 +11,7 @@ export default class RequestsQueue {
     private timeoutForUpdate: ReturnType<typeof setTimeout> | undefined;
     private apiEngine: ApiEngine;
     private activeRequest: FetchRequest | null;
+    public maxSize: number = Infinity;
 
     constructor(_requestsFetchingRate: number, _api: ApiEngine) {
         this.requests = [];
@@ -32,6 +33,15 @@ export default class RequestsQueue {
     }
 
     push(_req: FetchRequest) {
+        if (this.requests.length >= this.maxSize) {
+            if (_req.madeReject) {
+                _req.madeReject(new ApiEngineError(
+                    "queue_full",
+                    `Queue is full (maxSize=${this.maxSize}); rejecting new request.`
+                ));
+            }
+            return;
+        }
         this.requests.push(_req);
     }
 
