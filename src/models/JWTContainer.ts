@@ -28,7 +28,7 @@ export default class JWTContainer {
         let csrfFromLocalStorage    = localStorage.getItem("csrf");
         console.log("Got csrf");
         if (!csrfFromLocalStorage) {
-            throw "csrf key in local storage should be enabled, or set something like 'no csff' if not desired";
+            throw new Error("csrf key in local storage should be enabled, or set something like 'no csff' if not desired");
         }
 
         if (contentFromLocalStorage && csrfFromLocalStorage)
