@@ -143,7 +143,7 @@ export default class ApiEngine {
         _ticketCheckEndPoint: string,
         _updateCallback: undefined | ((_res: string) => void) = undefined
     ) {
-        return new Promise((_resolve) => {
+        return new Promise((_resolve, _reject) => {
             let cqrsCommand = new CQRSCommand(
                 _command,
                 _params,
@@ -155,9 +155,7 @@ export default class ApiEngine {
                 _updateCallback
             );
 
-            cqrsCommand.makeRequest().then((_res: any) => {
-                _resolve(_res);
-            })
+            cqrsCommand.makeRequest().then(_resolve, _reject);
         });
     }
 
