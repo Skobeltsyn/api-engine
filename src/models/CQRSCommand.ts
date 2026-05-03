@@ -1,5 +1,14 @@
 import ApiEngine from "../gateway/ApiEngine";
 import { log } from "../util/Log";
+import ApiEngineError from "./ApiEngineError";
+
+export interface CQRSCommandOptions {
+  callPeriod?: number;
+  ticketCheckEndpoint?: string;
+  updateCallback?: (_res: string) => void;
+  maxPollAttempts?: number;
+  timeoutMs?: number;
+}
 
 export default class CQRSCommand {
   private updateCallback: undefined | ((_res: string) => void);
@@ -11,6 +20,10 @@ export default class CQRSCommand {
   private isBlob: boolean = false;
   private ticketCheckEndpoint: string = "/cqrs";
   private url: string;
+  private maxPollAttempts: number = Infinity;
+  private timeoutMs: number = Infinity;
+  private pollAttempts: number = 0;
+  private pollStartedAt: number = 0;
 
   madeResolve?: (value: (PromiseLike<unknown> | unknown)) => void;
   madeReject?: (value: (PromiseLike<unknown> | unknown)) => void;
@@ -28,7 +41,8 @@ export default class CQRSCommand {
               _api: ApiEngine,
               _callPeriod: number = 1000,
               _ticketCheckEndpoint: string = "/cqrs",
-              _updateCallback: undefined | ((_res: string) => void) = undefined
+              _updateCallback: undefined | ((_res: string) => void) = undefined,
+              _options: { maxPollAttempts?: number; timeoutMs?: number } = {}
               ) {
     this.api = _api;
     this._command = _command;
@@ -38,6 +52,8 @@ export default class CQRSCommand {
     this.isBlob = _isBlob;
     this.ticketCheckEndpoint = _ticketCheckEndpoint;
     this.updateCallback = _updateCallback;
+    if (_options.maxPollAttempts !== undefined) this.maxPollAttempts = _options.maxPollAttempts;
+    if (_options.timeoutMs !== undefined) this.timeoutMs = _options.timeoutMs;
 
     this.makeRequest = this.makeRequest.bind(this);
     this.getResult = this.getResult.bind(this);
@@ -53,6 +69,24 @@ export default class CQRSCommand {
 
   getResult() {
     let me = this;
+    if (me.pollStartedAt === 0) me.pollStartedAt = Date.now();
+    me.pollAttempts += 1;
+
+    if (me.pollAttempts > me.maxPollAttempts) {
+      me.madeReject && me.madeReject(new ApiEngineError(
+        "cqrs_timeout",
+        `CQRS polling exhausted maxPollAttempts (${me.maxPollAttempts}) for ticket ${me._ticketId}.`
+      ));
+      return;
+    }
+    if ((Date.now() - me.pollStartedAt) > me.timeoutMs) {
+      me.madeReject && me.madeReject(new ApiEngineError(
+        "cqrs_timeout",
+        `CQRS polling exceeded timeoutMs (${me.timeoutMs}) for ticket ${me._ticketId}.`
+      ));
+      return;
+    }
+
     let cqrsQuery = {
       method: "POST",
       body: JSON.stringify({
