@@ -100,9 +100,23 @@ export default class FetchRequest {
     async perform():Promise<any> {
         let me = this;
         return new Promise(async (resolve, reject) => {
+            const rejectWith = async (err: unknown) => {
+                if (me.hooks?.transformError) {
+                    try {
+                        const transformed = await me.hooks.transformError(err);
+                        reject(transformed);
+                        return;
+                    } catch (hookErr) {
+                        reject(hookErr);
+                        return;
+                    }
+                }
+                reject(err);
+            };
+
             me.amountOfTries += 1;
             if (me.signal?.aborted) {
-                reject(new ApiEngineError("cancelled", "Request aborted before dispatch."));
+                await rejectWith(new ApiEngineError("cancelled", "Request aborted before dispatch."));
                 return;
             }
             let data: RequestInit = {... me.data};
@@ -115,7 +129,7 @@ export default class FetchRequest {
                     const result = await me.hooks.beforeRequest(data, me.url);
                     if (result !== undefined) data = result;
                 } catch (hookErr) {
-                    reject(hookErr);
+                    await rejectWith(hookErr);
                     return;
                 }
             }
@@ -123,7 +137,7 @@ export default class FetchRequest {
             log(this.url);
             return fetch(this.url, data).then((e: Response) => {
                 if (!e.ok) {
-                    reject(e);
+                    rejectWith(e);
                     return;
                 }
                 if (me.isBlob) {
@@ -131,6 +145,7 @@ export default class FetchRequest {
                 }
                 return e.json()
             }).then(async (_res) => {
+                if (_res === undefined) return;
                 if (_res) {
                     if (me.sessionContainer.jwtContainer)
                         if (_res.csrf) me.sessionContainer.jwtContainer.csrf = _res.csrf;
@@ -140,14 +155,14 @@ export default class FetchRequest {
                     try {
                         final = await me.hooks.transformResponse(_res, data);
                     } catch (hookErr) {
-                        reject(hookErr);
+                        await rejectWith(hookErr);
                         return;
                     }
                 }
                 resolve(final);
-            }).catch((e) => {
+            }).catch(async (e) => {
                 log("Caught error", e);
-                reject(e);
+                await rejectWith(e);
             });
         });
     }

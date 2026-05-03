@@ -74,6 +74,9 @@ export default class ApiEngine {
     get transformResponse(): ApiEngineHooks["transformResponse"] { return this.hooks.transformResponse; }
     set transformResponse(v: ApiEngineHooks["transformResponse"]) { this.hooks.transformResponse = v; }
 
+    get transformError(): ApiEngineHooks["transformError"] { return this.hooks.transformError; }
+    set transformError(v: ApiEngineHooks["transformError"]) { this.hooks.transformError = v; }
+
     private _listeners: { [k in ApiEngineEvent]?: Array<(payload: ApiEngineEventPayload) => void> } = {};
 
     on(event: ApiEngineEvent, handler: (payload: ApiEngineEventPayload) => void): void {
