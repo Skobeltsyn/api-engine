@@ -8,6 +8,7 @@ import NullWebsocketConnector from "./websockets/NullWebsocketConnector";
 import ApiEngineError from "../models/ApiEngineError";
 import { setDebug, log } from "../util/Log";
 import TestFetch from "./TestFetch";
+import ApiEngineHooks from "./ApiEngineHooks";
 
 export type ApiEngineEvent =
     | "request_started"
@@ -63,6 +64,12 @@ export default class ApiEngine {
         this._debug = value;
         setDebug(value);
     }
+
+    /** Optional pluggable interceptors. See {@link ApiEngineHooks}. */
+    public hooks: ApiEngineHooks = {};
+
+    get beforeRequest(): ApiEngineHooks["beforeRequest"] { return this.hooks.beforeRequest; }
+    set beforeRequest(v: ApiEngineHooks["beforeRequest"]) { this.hooks.beforeRequest = v; }
 
     private _listeners: { [k in ApiEngineEvent]?: Array<(payload: ApiEngineEventPayload) => void> } = {};
 
@@ -212,7 +219,7 @@ export default class ApiEngine {
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         if (!me.requestsQueue) return me.whatsWrong() as Promise<T>;
-        let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url, _signal);
+        let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url, _signal, this.hooks);
         request.priority = _priority;
         const promise = request.make() as Promise<T>;
         me.requestsQueue.push(request);
@@ -286,7 +293,7 @@ export default class ApiEngine {
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
 
         return new Promise<T>((_resolve, _reject) => {
-            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal);
+            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal, this.hooks);
             request.perform().then((_res) => {
                 _resolve(_res as T);
             }, (_err) => {
@@ -309,7 +316,7 @@ export default class ApiEngine {
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         return new Promise<T>((_resolve, _reject) => {
-            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal);
+            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal, this.hooks);
             request.isBlob = true;
 
             request.perform().then((_res) => {
