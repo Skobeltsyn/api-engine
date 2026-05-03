@@ -7,9 +7,10 @@ import WebsocketConnector from "./websockets/WebsocketConnector";
 import NullWebsocketConnector from "./websockets/NullWebsocketConnector";
 import ApiEngineError from "../models/ApiEngineError";
 import { setDebug, log } from "../util/Log";
+import TestFetch from "./TestFetch";
 
 export default class ApiEngine {
-    private testFetches: any[] = [];
+    private testFetches: TestFetch[] = [];
 
     get websocketConnector(): WebsocketConnector {
         return this._websocketConnector;
