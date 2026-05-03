@@ -1,13 +1,16 @@
 {
   "name": "api-engine",
-  "version": "0.0.787",
+  "version": "0.0.800",
   "description": "API engine for async fetching",
-  "main": "index.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "scripts": {
     "test": "echo 'no test yet'",
+    "clean": "rimraf dist",
     "clean_win": "rmdir /s /q dist",
-    "build": "npm run clean_win & tsc & cp package.json dist & cp  README.md dist",
-    "publish": "npm publish dist --registry http://151.248.114.248:5000/"
+    "build": "npm run clean && tsc && shx cp package.json dist && shx cp README.md dist",
+    "publish": "npm publish dist --registry http://151.248.114.248:5000/",
+    "dev": "vite"
   },
   "repository": {
     "type": "git",
@@ -23,10 +26,19 @@
     "url": "https://github.com/Skobeltsyn/api-engine/issues"
   },
   "homepage": "https://github.com/Skobeltsyn/api-engine#readme",
-  "devDependencies": {
-    "typescript": "^4.9.4"
-  },
   "dependencies": {
-    "tsc": "^2.0.4"
+    "tsc": "^2.0.4",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5",
+    "shx": "^0.3.4"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "types": "./index.d.ts"
+    }
   }
 }
