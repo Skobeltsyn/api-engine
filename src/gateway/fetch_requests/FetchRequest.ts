@@ -52,7 +52,6 @@ export default class FetchRequest {
     generateAnonymousHeaders() {
         let headers = {
             'Accept': '*/*',
-            "mode": 'cors',
         } as any;
         let contentType = this.generateContentTypetData();
         if (contentType) {
@@ -70,12 +69,10 @@ export default class FetchRequest {
         if (!jwtContainer) {
             headers = {
                 'Accept': '*/*',
-                "mode": 'cors'
             } as any;
         } else {
             headers = {
                 'Accept': '*/*',
-                "mode": 'cors',
                 "Authorization": jwtContainer.content,
                 "csrf": jwtContainer.csrf
             } as any;
@@ -93,6 +90,7 @@ export default class FetchRequest {
             me.amountOfTries += 1;
             let data = {... me.data};
             data.headers = this.generateHeaders();
+            if (data.mode === undefined) data.mode = 'cors';
             console.log(this.url);
             return fetch(this.url, data).then((e: Response) => {
                 if (!e.ok) {
