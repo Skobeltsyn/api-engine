@@ -96,7 +96,6 @@ export default class FetchRequest {
             console.log(this.url);
             return fetch(this.url, data).then((e: Response) => {
                 if (!e.ok) {
-                    me.amountOfTries += 1;
                     reject(e);
                     return;
                 }
@@ -113,7 +112,6 @@ export default class FetchRequest {
             }).catch((e) => {
                 console.log("Caught error");
                 console.log(e);
-                me.amountOfTries += 1;
                 console.log("Rejecting");
                 reject(e);
             });
