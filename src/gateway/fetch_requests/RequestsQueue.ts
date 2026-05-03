@@ -67,7 +67,7 @@ export default class RequestsQueue {
 
         if (request === undefined || request === null) {
             clearTimeout(this.timeoutForUpdate);
-            this.timeoutForUpdate = setTimeout(() => { me.processRequest.bind(me); me.processRequest(); }, me.requestsFetchingRate);
+            this.timeoutForUpdate = setTimeout(() => { me.processRequest(); }, me.requestsFetchingRate);
             return;
         }
         me.requestsNumber += 1;
