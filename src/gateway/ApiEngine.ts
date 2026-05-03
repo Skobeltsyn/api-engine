@@ -171,7 +171,7 @@ export default class ApiEngine {
     testFetchAndFail(_expectedFail: any, _timeToAnswerInMs: number) {
         const me = this;
         me.testFetches.push({
-            resolve: true, result: _expectedFail, timeToAnswerInMs: _timeToAnswerInMs
+            resolve: false, result: _expectedFail, timeToAnswerInMs: _timeToAnswerInMs
         })
     }
 
