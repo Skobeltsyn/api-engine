@@ -1,4 +1,5 @@
 import ApiEngine from "../gateway/ApiEngine";
+import { log } from "../util/Log";
 
 export default class CQRSCommand {
   private updateCallback: undefined | ((_res: string) => void);
@@ -61,7 +62,7 @@ export default class CQRSCommand {
     let method = me.api.asyncFetch;
 
     method(me.ticketCheckEndpoint, cqrsQuery).then((_e: any) => {
-      console.log(_e);
+      log(_e);
       if (_e.status === "выполнено") {
         me.madeResolve && me.madeResolve(_e.result);
       } else {

@@ -1,3 +1,5 @@
+import { log } from "../util/Log";
+
 export default class CacheContainer {
   storageName: string;
   quickStorage: string;
@@ -20,11 +22,11 @@ export default class CacheContainer {
   getKey(_key: string): any {
     let data = null as any;
     if (this.persistent) {
-      console.log(`Looking in localStorage`);
+      log(`Looking in localStorage`);
       data = localStorage.getItem(this.getStorageKey());
     }
     else {
-      console.log(`Looking in quickStorage`);
+      log(`Looking in quickStorage`);
       data = `${this.quickStorage}`;
     }
     if (!data) return null;

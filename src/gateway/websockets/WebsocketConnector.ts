@@ -1,5 +1,6 @@
 // Класс чисто для подключения к WebSocket и диспетчит ивенты, совпадающте с каналами.
 import ApiEngine from "../ApiEngine";
+import { log } from "../../util/Log";
 
 export default class WebsocketConnector {
   websocket?: WebSocket;
@@ -36,11 +37,10 @@ export default class WebsocketConnector {
     me.connecting = true;
     try {
       let url = `${me.api.serverUrl.replace("https", "wss")}/${me.url}`;
-      console.log(`Enabling websocket on ${url}`)
-      me.websocket = new WebSocket(url); //"wss://erconf.ru/ws");
-      // alert(2);
+      log(`Enabling websocket on ${url}`)
+      me.websocket = new WebSocket(url);
     } catch (e) {
-      console.log(e);
+      console.error("Websocket init error", e);
       setTimeout(me.initWebsocket, 2000);
       return;
     }
@@ -106,7 +106,7 @@ export default class WebsocketConnector {
       });
     } catch (e) {
       me.connecting = false;
-      console.log(e);
+      console.error("Websocket open error", e);
       setTimeout(me.websocketResque, 5000);
     }
   }
@@ -134,7 +134,7 @@ export default class WebsocketConnector {
       }
       return false;
     } catch (e) {
-      console.log(e);
+      console.error("Websocket send error", e);
       setTimeout(() => {
         me.websocketResque();
       });

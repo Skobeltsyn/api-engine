@@ -1,5 +1,6 @@
 import JWTContainer from "../models/JWTContainer";
 import ApiEngine from "../gateway/ApiEngine";
+import { log } from "../util/Log";
 
 export default class SessionContainer<UserClass> {
     private meUrl: string;
@@ -78,34 +79,31 @@ export default class SessionContainer<UserClass> {
 
     checkUser():Promise<UserClass> {
         let me = this;
-        if (!me.apiEngine) throw new Error("Не задан API Engine");
-        console.log("checkUser");
+        if (!me.apiEngine) throw new Error("API Engine is not set");
+        log("checkUser");
         return new Promise((resolve, reject) => {
             if (!me._jwtContainer) {
                 console.error("No JWT");
                 reject("No JWT");
                 return;
             }
-            console.log("Sending request");
+            log("Sending request");
             me.apiEngine.asyncFetch(me.meUrl, {}).then((e: any) => {
-                console.log("Sending request");
+                log("Got response");
                 if (!e) {
                     console.error("Empty answer");
                     reject("Empty answer");
                     return;
                 }
 
-
                 if (e || me._jwtContainer) {
-                    // me._currentUser = (new me.userClassAsObject(e.uuid)) as UserClass;
-                    console.log("Setting user");
+                    log("Setting user");
                     try {
                         me._currentUser = (new me.userClassAsObject(e)) as UserClass;
                         resolve(me._currentUser);
                     } catch (e) {
                         reject(e);
                     }
-                    // alert(JSON.stringify(e));
                 } else {
                     console.error("Answering error");
                     reject(false);

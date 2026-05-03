@@ -6,6 +6,7 @@ import CQRSCommand from "../models/CQRSCommand";
 import WebsocketConnector from "./websockets/WebsocketConnector";
 import NullWebsocketConnector from "./websockets/NullWebsocketConnector";
 import ApiEngineError from "../models/ApiEngineError";
+import { setDebug, log } from "../util/Log";
 
 export default class ApiEngine {
     private testFetches: any[] = [];
@@ -42,6 +43,13 @@ export default class ApiEngine {
     serverUrl: string;
     sessionContainer: SessionContainer<any>;
     private _cacheContainer: CacheContainer;
+    private _debug: boolean = false;
+
+    get debug(): boolean { return this._debug; }
+    set debug(value: boolean) {
+        this._debug = value;
+        setDebug(value);
+    }
 
     constructor(_serverUrl: string,
                 _requestsFetchingRate: number,
@@ -75,14 +83,14 @@ export default class ApiEngine {
 
     startQueue() {
         const me = this;
-        console.log("Starting queing process");
+        log("Starting queing process");
         if (!this.requestsQueue) {
-            console.log("Creating queue");
+            log("Creating queue");
             this.requestsQueue = new RequestsQueue(me.requestsFetchingRate, me);
-            console.log("Starting queue");
+            log("Starting queue");
             this.requestsQueue.start();
         } else {
-            console.log("Restarting queue");
+            log("Restarting queue");
             this.requestsQueue.start();
         }
     }
@@ -92,12 +100,12 @@ export default class ApiEngine {
     }
 
     asyncFetchWithCache(_url:string, _dataToSend: any) {
-        console.log("Using cache");
+        log("Using cache");
         return this.prioritizedAsyncFetchWithCache(_url, _dataToSend, 0);
     }
 
     prioritizedAsyncFetchWithCache(_url:string, _dataToSend: any, _priority: number) {
-        console.log(`Checking for key ${_url}`);;
+        log(`Checking for key ${_url}`);
         let cachedData = this.cacheContainer.getKey(_url);
         if (cachedData)
             return new Promise((_resolve) => {

@@ -1,5 +1,6 @@
 import FetchRequest from "./FetchRequest";
 import ApiEngine from "../ApiEngine";
+import { log } from "../../util/Log";
 
 export default class RequestsQueue {
     private requestsFetchingRate: number;
@@ -37,11 +38,11 @@ export default class RequestsQueue {
         if (this.timeoutForUpdate) clearTimeout(this.timeoutForUpdate);
         this.active = true;
         this.timeoutForUpdate = setTimeout(this.processRequest, 100);
-        console.log("Queue started");
+        log("Queue started");
     }
 
     stop() {
-        console.log("Stopping Queue");
+        log("Stopping Queue");
         this.active = false;
         clearTimeout(this.timeoutForUpdate);
     }

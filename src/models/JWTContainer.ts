@@ -1,3 +1,5 @@
+import { log } from "../util/Log";
+
 export default class JWTContainer {
     private readonly _content: string
     private _csrf: string
@@ -19,14 +21,14 @@ export default class JWTContainer {
     constructor(_content: string, _csrf: string) {
         this._content = _content;
         this._csrf = _csrf;
-        console.log("JWT enabled");
+        log("JWT enabled");
     }
 
     static tryToRestoreJWT():JWTContainer | null {
         let contentFromLocalStorage = localStorage.getItem("jwt");
-        console.log("Got jwt");
+        log("Got jwt");
         let csrfFromLocalStorage    = localStorage.getItem("csrf");
-        console.log("Got csrf");
+        log("Got csrf");
         if (!csrfFromLocalStorage) {
             throw new Error("csrf key in local storage should be enabled, or set something like 'no csff' if not desired");
         }
@@ -40,7 +42,7 @@ export default class JWTContainer {
         if (this._content && this._csrf) {
             localStorage.setItem("jwt", this._content);
             localStorage.setItem("csrf", this._csrf);
-            console.log("Written to localstorage");
+            log("Written to localstorage");
         } else {
             console.error(`Did not write to localstorage: content: ${!!this._content}, csrf: ${!!this._csrf}`);
         }

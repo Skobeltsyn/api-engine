@@ -1,5 +1,6 @@
 import SessionContainer from "../../session/SessionContainer";
 import CacheContainer from "../../models/CacheContainer";
+import { log } from "../../util/Log";
 
 export default class FetchRequest {
     get priority(): number {
@@ -41,11 +42,10 @@ export default class FetchRequest {
 
     generateContentTypeData() {
         let result = "application/json";
-        // console.log(this.data.body.constructor);
         if (this.data.body && this.data.body.constructor === FormData) {
             result = "multipart/form-data";
-            console.log("Making form data");
-            return undefined; //Я был не бухой, там реал косяк
+            log("Making form data");
+            return undefined;
         }
         return result;
     }
@@ -97,7 +97,7 @@ export default class FetchRequest {
             let data = {... me.data};
             data.headers = this.generateHeaders();
             if (data.mode === undefined) data.mode = 'cors';
-            console.log(this.url);
+            log(this.url);
             return fetch(this.url, data).then((e: Response) => {
                 if (!e.ok) {
                     reject(e);
@@ -114,9 +114,7 @@ export default class FetchRequest {
                 }
                 resolve(_res);
             }).catch((e) => {
-                console.log("Caught error");
-                console.log(e);
-                console.log("Rejecting");
+                log("Caught error", e);
                 reject(e);
             });
         });
