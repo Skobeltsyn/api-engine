@@ -1,3 +1,7 @@
+/**
+ * Stable error codes thrown by api-engine. Consumers can switch on these
+ * without parsing message strings.
+ */
 export type ApiEngineErrorCode =
     | "queue_not_initialized"
     | "url_invalid"
@@ -5,6 +9,10 @@ export type ApiEngineErrorCode =
     | "queue_full"
     | "cancelled";
 
+/**
+ * Error subclass used by api-engine. Carries a `code` field with one of
+ * the {@link ApiEngineErrorCode} values.
+ */
 export default class ApiEngineError extends Error {
     readonly code: ApiEngineErrorCode;
 

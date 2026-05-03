@@ -2,6 +2,10 @@ import JWTContainer from "../models/JWTContainer";
 import ApiEngine from "../gateway/ApiEngine";
 import { log } from "../util/Log";
 
+/**
+ * Owns the JWT, CSRF token, and current authenticated user. Pass to
+ * {@link ApiEngine}; the engine wires itself in as `apiEngine`.
+ */
 export default class SessionContainer<UserClass> {
     private meUrl: string;
 
@@ -35,10 +39,12 @@ export default class SessionContainer<UserClass> {
        this.jwtContainer = JWTContainer.tryToRestoreJWT();
     }
 
+    /** Re-read the JWT from localStorage into the in-memory container. */
     refresh() {
         this.jwtContainer = JWTContainer.tryToRestoreJWT();
     }
 
+    /** Clear jwt/csrf from localStorage and reset the in-memory session. */
     clearJwt() {
         localStorage.removeItem("jwt");
         localStorage.removeItem("csrf");
@@ -78,6 +84,11 @@ export default class SessionContainer<UserClass> {
         return this._jwtContainer;
     }
 
+    /**
+     * Validate the current JWT against the configured "me" endpoint and
+     * populate `currentUser`. On failure, calls `jwtContainer.revoke()` if
+     * {@link revokeOnCheckUserFailure} is true (default).
+     */
     checkUser():Promise<UserClass> {
         let me = this;
         if (!me.apiEngine) throw new Error("API Engine is not set");

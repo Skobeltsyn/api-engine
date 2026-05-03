@@ -10,6 +10,10 @@ export interface CQRSCommandOptions {
   timeoutMs?: number;
 }
 
+/**
+ * A CQRS command pattern: post a command, receive a ticket, then poll
+ * until the server reports completion. Used by {@link ApiEngine.corsFetch}.
+ */
 export default class CQRSCommand {
   private updateCallback: undefined | ((_res: string) => void);
   private _command: string;
@@ -112,6 +116,10 @@ export default class CQRSCommand {
     });
   }
 
+  /**
+   * Submit the command, then poll for the result. Resolves with the final
+   * server result or rejects on transport / timeout / max-attempts.
+   */
   makeRequest():Promise<any> {
     let me = this;
 

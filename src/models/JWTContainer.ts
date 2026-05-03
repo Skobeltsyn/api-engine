@@ -1,5 +1,9 @@
 import { log } from "../util/Log";
 
+/**
+ * Holds an authentication token (JWT) and CSRF token, and persists them
+ * to localStorage.
+ */
 export default class JWTContainer {
     private readonly _content: string
     private _csrf: string
@@ -24,6 +28,10 @@ export default class JWTContainer {
         log("JWT enabled");
     }
 
+    /**
+     * Read jwt + csrf from localStorage. Returns a JWTContainer if both are
+     * present, `null` if jwt is missing, throws if csrf is missing.
+     */
     static tryToRestoreJWT():JWTContainer | null {
         let contentFromLocalStorage = localStorage.getItem("jwt");
         log("Got jwt");
@@ -48,6 +56,10 @@ export default class JWTContainer {
         }
     }
 
+    /**
+     * Clear jwt + csrf from localStorage and reload the page. Coarse — for a
+     * non-reload logout, call {@link SessionContainer.clearJwt} instead.
+     */
     revoke() {
         localStorage.removeItem("jwt");
         localStorage.removeItem("csrf");

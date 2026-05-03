@@ -85,6 +85,12 @@ export default class ApiEngine {
         }
     }
 
+    /**
+     * Build an ApiEngine.
+     * @param _serverUrl Base URL prepended to relative paths.
+     * @param _requestsFetchingRate Minimum delay between queued requests, in ms.
+     * @param _sessionContainer SessionContainer that owns the JWT and current user.
+     */
     constructor(_serverUrl: string,
                 _requestsFetchingRate: number,
                 _sessionContainer: SessionContainer<any>) {
@@ -115,6 +121,10 @@ export default class ApiEngine {
         this._websocketConnector = new NullWebsocketConnector("/", this);
     }
 
+    /**
+     * Start (or restart) the request queue. Must be called before any fetch
+     * methods that use the queue.
+     */
     startQueue() {
         const me = this;
         log("Starting queing process");
@@ -129,15 +139,29 @@ export default class ApiEngine {
         }
     }
 
+    /**
+     * Issue a queued fetch with the default 5 retries and no caching.
+     * @param _url Path or absolute URL.
+     * @param _dataToSend Fetch RequestInit (method, body, headers, ...).
+     * @param _signal Optional AbortSignal to cancel the request.
+     */
     asyncFetch<T = any>(_url:string, _dataToSend: any, _signal?: AbortSignal): Promise<T> {
         return this.asyncFetchWithRetries<T>(_url, _dataToSend, 5, false, 0, _signal);
     }
 
+    /**
+     * Like {@link asyncFetch} but checks the cache first; on miss, caches the
+     * successful response.
+     */
     asyncFetchWithCache<T = any>(_url:string, _dataToSend: any, _signal?: AbortSignal): Promise<T> {
         log("Using cache");
         return this.prioritizedAsyncFetchWithCache<T>(_url, _dataToSend, 0, _signal);
     }
 
+    /**
+     * Cached fetch with explicit queue priority.
+     * @param _priority Higher number = served sooner inside the queue.
+     */
     prioritizedAsyncFetchWithCache<T = any>(_url:string, _dataToSend: any, _priority: number, _signal?: AbortSignal): Promise<T> {
         log(`Checking for key ${_url}`);
         let cachedData = this.cacheContainer.getKey(_url);
@@ -165,6 +189,10 @@ export default class ApiEngine {
         }
     }
 
+    /**
+     * Lower-level fetch entry point that exposes retry count, caching, and
+     * priority. Other fetch methods are convenience wrappers around this.
+     */
     asyncFetchWithRetries<T = any>(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number, _signal?: AbortSignal): Promise<T> {
         const me = this;
         if (me.testFetches.length > 0) {
@@ -191,6 +219,12 @@ export default class ApiEngine {
         return promise;
     }
 
+    /**
+     * Issue a CQRS command: post the command, then poll the ticket endpoint
+     * until the server reports completion.
+     * @param _updateCallback Optional callback fired on each poll with the
+     *   intermediate status string.
+     */
     corsFetch<T = any>(
         _command: string,
         _params: any,
@@ -215,6 +249,10 @@ export default class ApiEngine {
         });
     }
 
+    /**
+     * Push a stubbed success response. The next fetch call (any variant) pops
+     * this and resolves with `_expectedResult` after `_timeToAnswerInMs` ms.
+     */
     testFetch(_expectedResult: any, _timeToAnswerInMs: number) {
         const me = this;
         me.testFetches.push({
@@ -222,6 +260,10 @@ export default class ApiEngine {
         })
     }
 
+    /**
+     * Push a stubbed failure response. The next fetch call rejects with
+     * `_expectedFail` after `_timeToAnswerInMs` ms.
+     */
     testFetchAndFail(_expectedFail: any, _timeToAnswerInMs: number) {
         const me = this;
         me.testFetches.push({
@@ -278,6 +320,7 @@ export default class ApiEngine {
         });
     }
 
+    /** Drop all pending queue entries; the active request is rejected. */
     cleanQueue() {
         if (this.requestsQueue) this.requestsQueue.clean();
     }

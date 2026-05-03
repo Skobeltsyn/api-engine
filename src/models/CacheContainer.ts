@@ -1,9 +1,15 @@
 import { log } from "../util/Log";
 
+/**
+ * Simple key/value cache backed by localStorage (or in-memory string when
+ * {@link persistent} is false). Used by ApiEngine to memoize responses for
+ * `asyncFetchWithCache`.
+ */
 export default class CacheContainer {
   storageName: string;
   quickStorage: string;
   persistent: boolean;
+  /** Optional cap on entries; oldest entries are evicted on overflow. */
   public maxEntries: number = Infinity;
 
   constructor(_storageName: string) {
@@ -20,6 +26,7 @@ export default class CacheContainer {
     return `${this.storageName}_storage`;
   }
 
+  /** Return the cached value for `_key`, or `null`/`undefined` on miss. */
   getKey(_key: string): any {
     let data = null as any;
     if (this.persistent) {
@@ -43,6 +50,10 @@ export default class CacheContainer {
     if (foundValue) return foundValue;
   }
 
+  /**
+   * Store `_content` under `_key`. Honors {@link maxEntries} via
+   * insertion-order eviction. Returns `false` if `_key` is null/empty.
+   */
   setKey(_key: string | null, _content: any): boolean {
     if (!_key) return false;
     let wroteData = {} as any;
