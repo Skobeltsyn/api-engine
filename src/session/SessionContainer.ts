@@ -14,6 +14,7 @@ export default class SessionContainer<UserClass> {
         this._apiEngine = value;
     }
     userClassAsObject: any;
+    public revokeOnCheckUserFailure: boolean = true;
     private _apiEngine: ApiEngine | null
 
     constructor(_userClassAsObject: any, _meUrl: string) {
@@ -110,7 +111,7 @@ export default class SessionContainer<UserClass> {
                 }
             }, (e) => {
                 console.error("Something went wrong");
-                if (me._jwtContainer) me._jwtContainer.revoke();
+                if (me.revokeOnCheckUserFailure && me._jwtContainer) me._jwtContainer.revoke();
                 reject(e);
             });
         });
