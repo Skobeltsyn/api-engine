@@ -92,6 +92,7 @@ export default class WebsocketConnector {
       me.alive = true;
       me.connecting = false;
       setTimeout(() => {
+        if (me.pingInterval) clearInterval(me.pingInterval);
         me.pingInterval = setInterval(me.pingAlive,
           5000);
       });
