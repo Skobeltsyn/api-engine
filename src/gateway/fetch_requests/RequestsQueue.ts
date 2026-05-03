@@ -34,6 +34,7 @@ export default class RequestsQueue {
     }
 
     start() {
+        if (this.timeoutForUpdate) clearTimeout(this.timeoutForUpdate);
         this.active = true;
         this.timeoutForUpdate = setTimeout(this.processRequest, 100);
         console.log("Queue started");
