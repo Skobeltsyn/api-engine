@@ -5,6 +5,7 @@ import CacheContainer from "../models/CacheContainer";
 import CQRSCommand from "../models/CQRSCommand";
 import WebsocketConnector from "./websockets/WebsocketConnector";
 import NullWebsocketConnector from "./websockets/NullWebsocketConnector";
+import ApiEngineError from "../models/ApiEngineError";
 
 export default class ApiEngine {
     private testFetches: any[] = [];
@@ -239,9 +240,14 @@ export default class ApiEngine {
     whatsWrong() {
         const me = this;
         return new Promise((resolve, reject) => {
-            let reason = "";
-            if (!me.requestsQueue) reason += "Не инициализировано requestsQueue;";
-            reject(reason)
+            if (!me.requestsQueue) {
+                reject(new ApiEngineError(
+                    "queue_not_initialized",
+                    "RequestsQueue is not initialized — call apiEngine.startQueue() before issuing requests."
+                ));
+                return;
+            }
+            reject(new ApiEngineError("queue_not_initialized", "Unknown queue error."));
         })
     }
 

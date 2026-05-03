@@ -7,6 +7,7 @@ import CacheContainer from "./src/models/CacheContainer";
 import CQRSCommand from "./src/models/CQRSCommand";
 import WebsocketConnector from "./src/gateway/websockets/WebsocketConnector";
 import NullWebsocketConnector from "./src/gateway/websockets/NullWebsocketConnector";
+import ApiEngineError from "./src/models/ApiEngineError";
 
 export {SessionContainer};
 export {JWTContainer};
@@ -17,3 +18,4 @@ export {CacheContainer};
 export {CQRSCommand};
 export {WebsocketConnector};
 export {NullWebsocketConnector};
+export {ApiEngineError};
