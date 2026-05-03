@@ -27,7 +27,6 @@
   },
   "homepage": "https://github.com/Skobeltsyn/api-engine#readme",
   "dependencies": {
-    "tsc": "^2.0.4",
     "typescript": "^5.8.2"
   },
   "devDependencies": {
