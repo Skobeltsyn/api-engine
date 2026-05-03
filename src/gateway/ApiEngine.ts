@@ -115,6 +115,22 @@ export default class ApiEngine {
         return this.asyncFetchWithRetries(_url, _dataToSend, 5, true, _priority);
     }
 
+    private buildUrlOrReject(_url: string): URL | ApiEngineError {
+        const me = this;
+        const isExternal = (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1);
+        const raw = isExternal && me.canUseOutsideLinks
+            ? _url.replace(/([^:]\/)\/+/g, "$1")
+            : `${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1");
+        try {
+            return new URL(raw);
+        } catch (e) {
+            return new ApiEngineError(
+                "url_invalid",
+                `Could not parse URL "${raw}": ${(e as Error).message}`
+            );
+        }
+    }
+
     asyncFetchWithRetries(_url:string, _dataToSend: any, _numOfRetriesBeforeReject: number, _cacheAnswer: boolean, _priority: number) {
         const me = this;
         if (me.testFetches.length > 0) {
@@ -131,14 +147,10 @@ export default class ApiEngine {
                }
             });
         }
-        let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
-        if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
-            if (me.canUseOutsideLinks) {
-                url = new URL(_url.replace(/([^:]\/)\/+/g, "$1"));
-            }
-        }
+        const urlOrErr = me.buildUrlOrReject(_url);
+        if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         if (!me.requestsQueue) return me.whatsWrong();
-        let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
+        let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url);
         request.priority = _priority;
         me.requestsQueue.push(request);
         return request.make();
@@ -193,16 +205,11 @@ export default class ApiEngine {
                 );
             });
         }
-        let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
+        const urlOrErr = me.buildUrlOrReject(_url);
+        if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
 
         return new Promise((_resolve, _reject) => {
-            if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
-                if (me.canUseOutsideLinks) {
-                    url = new URL(_url.replace(/([^:]\/)\/+/g, "$1"));
-                }
-            }
-
-            let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
+            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
             request.perform().then((_res) => {
                 _resolve(_res);
             }, (_err) => {
@@ -222,15 +229,10 @@ export default class ApiEngine {
                 );
             });
         }
-        let url = new URL(`${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1"));
+        const urlOrErr = me.buildUrlOrReject(_url);
+        if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         return new Promise<any>((_resolve, _reject) => {
-            if ( (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1) ) {
-                if (me.canUseOutsideLinks) {
-                    url = new URL(_url.replace(/([^:]\/)\/+/g, "$1"));
-                }
-            }
-
-            let request = new FetchRequest(url, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
+            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url);
             request.isBlob = true;
 
             request.perform().then((_res) => {
