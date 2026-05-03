@@ -37,6 +37,13 @@ export default class SessionContainer<UserClass> {
         this.jwtContainer = JWTContainer.tryToRestoreJWT();
     }
 
+    clearJwt() {
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("csrf");
+        this._jwtContainer = null;
+        this._currentUser = null;
+    }
+
     get currentEntity(): UserClass {
         if (!this._currentUser) throw "No user";
         return this._currentUser;
