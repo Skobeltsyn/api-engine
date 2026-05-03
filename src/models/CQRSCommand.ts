@@ -72,6 +72,8 @@ export default class CQRSCommand {
           me.getResult();
         }, me._callPeriod);
       }
+    }, (_err: any) => {
+      me.madeReject && me.madeReject(_err);
     });
   }
 
