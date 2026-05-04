@@ -12,8 +12,14 @@ describe("CacheContainer", () => {
         expect(cache.getKey("/users/1")).toEqual({ id: 1, name: "Alice" });
     });
 
-    it("returns null on missing key", () => {
+    it("returns null when storage is empty", () => {
         const cache = new CacheContainer("test_storage");
+        expect(cache.getKey("/missing")).toBeNull();
+    });
+
+    it("returns undefined for a missing key in a non-empty cache", () => {
+        const cache = new CacheContainer("test_storage");
+        cache.setKey("/present", { x: 1 });
         expect(cache.getKey("/missing")).toBeUndefined();
     });
 
