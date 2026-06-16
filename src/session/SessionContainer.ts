@@ -1,6 +1,7 @@
 import JWTContainer from "../models/JWTContainer";
 import ApiEngine from "../gateway/ApiEngine";
 import { log } from "../util/Log";
+import { isCriticalError } from "../util/criticalError";
 
 /**
  * Owns the JWT, CSRF token, and current authenticated user. Pass to
@@ -19,6 +20,14 @@ export default class SessionContainer<UserClass> {
     }
     userClassAsObject: any;
     public revokeOnCheckUserFailure: boolean = true;
+    /**
+     * When false (default), a transient/critical `checkUser` failure (network
+     * drop, 5xx) does NOT revoke the JWT — the session survives the blip. Set
+     * true to revoke on any failure (legacy behavior). Definitive auth/client
+     * failures (e.g. 401) still revoke regardless, subject to
+     * {@link revokeOnCheckUserFailure}.
+     */
+    public revokeOnTransientError: boolean = false;
     private _apiEngine: ApiEngine | null
 
     constructor(_userClassAsObject: any, _meUrl: string) {
@@ -122,7 +131,12 @@ export default class SessionContainer<UserClass> {
                 }
             }, (e) => {
                 console.error("Something went wrong");
-                if (me.revokeOnCheckUserFailure && me._jwtContainer) me._jwtContainer.revoke();
+                // Keep the session on transient/critical failures (network, 5xx)
+                // unless explicitly opted in; only definitive failures revoke.
+                const transient = isCriticalError(e);
+                if (me.revokeOnCheckUserFailure && me._jwtContainer && (!transient || me.revokeOnTransientError)) {
+                    me._jwtContainer.revoke();
+                }
                 reject(e);
             });
         });
