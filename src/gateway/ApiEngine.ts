@@ -9,6 +9,7 @@ import ApiEngineError from "../models/ApiEngineError";
 import { setDebug, log } from "../util/Log";
 import TestFetch from "./TestFetch";
 import ApiEngineHooks from "./ApiEngineHooks";
+import { buildRequestUrl } from "../util/buildUrl";
 
 export type ApiEngineEvent =
     | "request_started"
@@ -55,6 +56,16 @@ export default class ApiEngine {
     requestsFetchingRate: number;
     requestsQueue?: RequestsQueue;
     serverUrl: string;
+    /**
+     * Ordered failover pool of base URLs. When non-empty, a critical error
+     * (network failure / 5xx) on one server fails over to the next, trying each
+     * up to {@link serverFailoverAttempts} times before throwing
+     * `all_servers_failed`. Empty (default) keeps single-server behavior using
+     * {@link serverUrl}.
+     */
+    servers: string[] = [];
+    /** Attempts per server before failing over to the next one. Default 1. */
+    serverFailoverAttempts: number = 1;
     sessionContainer: SessionContainer<any>;
     private _cacheContainer: CacheContainer;
     private _debug: boolean = false;
@@ -190,19 +201,15 @@ export default class ApiEngine {
     }
 
     private buildUrlOrReject(_url: string): URL | ApiEngineError {
-        const me = this;
-        const isExternal = (_url.indexOf("https://") > -1) || (_url.indexOf("http://") > -1);
-        const raw = isExternal && me.canUseOutsideLinks
-            ? _url.replace(/([^:]\/)\/+/g, "$1")
-            : `${me.serverUrl}/${_url}`.replace(/([^:]\/)\/+/g, "$1");
-        try {
-            return new URL(raw);
-        } catch (e) {
-            return new ApiEngineError(
-                "url_invalid",
-                `Could not parse URL "${raw}": ${(e as Error).message}`
-            );
-        }
+        return buildRequestUrl(this.serverUrl, _url, this.canUseOutsideLinks);
+    }
+
+    /** Copy the engine's failover config onto a freshly built request. */
+    private applyServerPool(req: FetchRequest): FetchRequest {
+        req.servers = this.servers;
+        req.failoverAttempts = this.serverFailoverAttempts;
+        req.canUseOutsideLinks = this.canUseOutsideLinks;
+        return req;
     }
 
     /**
@@ -228,7 +235,7 @@ export default class ApiEngine {
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         if (!me.requestsQueue) return me.whatsWrong() as Promise<T>;
-        let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url, _signal, this.hooks);
+        let request = this.applyServerPool(new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, _cacheAnswer ? this.cacheContainer : null, _url, _signal, this.hooks));
         request.priority = _priority;
         const promise = request.make() as Promise<T>;
         me.requestsQueue.push(request);
@@ -302,7 +309,7 @@ export default class ApiEngine {
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
 
         return new Promise<T>((_resolve, _reject) => {
-            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal, this.hooks);
+            let request = this.applyServerPool(new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal, this.hooks));
             request.perform().then((_res) => {
                 _resolve(_res as T);
             }, (_err) => {
@@ -325,7 +332,7 @@ export default class ApiEngine {
         const urlOrErr = me.buildUrlOrReject(_url);
         if (urlOrErr instanceof ApiEngineError) return Promise.reject(urlOrErr);
         return new Promise<T>((_resolve, _reject) => {
-            let request = new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal, this.hooks);
+            let request = this.applyServerPool(new FetchRequest(urlOrErr, _dataToSend, this.sessionContainer, _numOfRetriesBeforeReject, null, _url, _signal, this.hooks));
             request.isBlob = true;
 
             request.perform().then((_res) => {

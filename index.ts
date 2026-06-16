@@ -8,6 +8,7 @@ import CQRSCommand from "./src/models/CQRSCommand";
 import WebsocketConnector from "./src/gateway/websockets/WebsocketConnector";
 import NullWebsocketConnector from "./src/gateway/websockets/NullWebsocketConnector";
 import ApiEngineError from "./src/models/ApiEngineError";
+import { isCriticalError } from "./src/util/criticalError";
 
 export {SessionContainer};
 export {JWTContainer};
@@ -19,3 +20,4 @@ export {CQRSCommand};
 export {WebsocketConnector};
 export {NullWebsocketConnector};
 export {ApiEngineError};
+export {isCriticalError};

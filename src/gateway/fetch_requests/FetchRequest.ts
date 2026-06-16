@@ -3,6 +3,8 @@ import CacheContainer from "../../models/CacheContainer";
 import { log } from "../../util/Log";
 import ApiEngineError from "../../models/ApiEngineError";
 import ApiEngineHooks from "../ApiEngineHooks";
+import { isCriticalError } from "../../util/criticalError";
+import { buildRequestUrl } from "../../util/buildUrl";
 
 export default class FetchRequest {
     get priority(): number {
@@ -22,6 +24,12 @@ export default class FetchRequest {
     isBlob?: boolean;
     signal?: AbortSignal;
     hooks?: ApiEngineHooks;
+    /** Ordered failover pool of base URLs. Empty => single-server (use `url`). */
+    servers: string[] = [];
+    /** Attempts per server before failing over to the next one. */
+    failoverAttempts: number = 1;
+    /** Mirrors ApiEngine.canUseOutsideLinks; used when rebuilding URLs per server. */
+    canUseOutsideLinks: boolean = false;
     private authRetried: boolean = false;
     private _priority: number;
 
@@ -98,26 +106,67 @@ export default class FetchRequest {
         return headers;
     }
 
+    /**
+     * Run the request. When {@link servers} is configured, fail over across the
+     * pool on critical errors (network failures / 5xx): each server is tried up
+     * to {@link failoverAttempts} times before advancing; a non-critical error
+     * (4xx/auth) rejects immediately without failover; exhausting the pool
+     * rejects with `all_servers_failed`. The final rejection is routed through
+     * `transformError` exactly once (swallowed intermediate attempts are not).
+     */
     async perform():Promise<any> {
         const me = this;
-        return new Promise(async (resolve, reject) => {
-            const rejectWith = async (err: unknown) => {
-                if (me.hooks?.transformError) {
-                    try {
-                        reject(await me.hooks.transformError(err));
-                        return;
-                    } catch (hookErr) {
-                        reject(hookErr);
-                        return;
-                    }
-                }
-                reject(err);
-            };
+        try {
+            if (me.servers && me.servers.length > 0) {
+                return await me.performWithFailover();
+            }
+            return await me.performOnce(me.url);
+        } catch (err) {
+            if (me.hooks?.transformError) {
+                throw await me.hooks.transformError(err);
+            }
+            throw err;
+        }
+    }
 
+    /** Try each server in the pool up to `failoverAttempts` times. */
+    private async performWithFailover():Promise<any> {
+        const me = this;
+        const path = me.cacheKey ?? String(me.url);
+        const attempts = me.failoverAttempts > 0 ? me.failoverAttempts : 1;
+        let lastErr: unknown = undefined;
+
+        for (const base of me.servers) {
+            const built = buildRequestUrl(base, path, me.canUseOutsideLinks);
+            if (built instanceof ApiEngineError) {
+                lastErr = built;
+                continue; // malformed base URL — skip to the next server
+            }
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    return await me.performOnce(built);
+                } catch (err) {
+                    lastErr = err;
+                    // Only infrastructural/transient failures warrant failover.
+                    if (!isCriticalError(err)) throw err;
+                }
+            }
+        }
+        throw new ApiEngineError(
+            "all_servers_failed",
+            `All ${me.servers.length} server(s) failed after ${attempts} attempt(s) each.`,
+            lastErr
+        );
+    }
+
+    /** A single fetch attempt against `targetUrl`. Rejects with the raw error. */
+    private async performOnce(targetUrl: URL):Promise<any> {
+        const me = this;
+        return new Promise(async (resolve, reject) => {
             try {
                 me.amountOfTries += 1;
                 if (me.signal?.aborted) {
-                    await rejectWith(new ApiEngineError("cancelled", "Request aborted before dispatch."));
+                    reject(new ApiEngineError("cancelled", "Request aborted before dispatch."));
                     return;
                 }
                 let data: RequestInit = {... me.data};
@@ -126,12 +175,12 @@ export default class FetchRequest {
                 if (me.signal && data.signal === undefined) data.signal = me.signal;
 
                 if (me.hooks?.beforeRequest) {
-                    const result = await me.hooks.beforeRequest(data, me.url);
+                    const result = await me.hooks.beforeRequest(data, targetUrl);
                     if (result !== undefined) data = result;
                 }
 
-                log(me.url);
-                let response = await fetch(me.url, data);
+                log(targetUrl);
+                let response = await fetch(targetUrl, data);
 
                 if (response.status === 401 && me.hooks?.onAuthFailure && !me.authRetried) {
                     me.authRetried = true;
@@ -141,12 +190,12 @@ export default class FetchRequest {
                     retryData.headers = me.generateHeaders();
                     if (retryData.mode === undefined) retryData.mode = 'cors';
                     if (me.signal && retryData.signal === undefined) retryData.signal = me.signal;
-                    response = await fetch(me.url, retryData);
+                    response = await fetch(targetUrl, retryData);
                     data = retryData;
                 }
 
                 if (!response.ok) {
-                    await rejectWith(response);
+                    reject(response);
                     return;
                 }
 
@@ -163,7 +212,7 @@ export default class FetchRequest {
                 resolve(final);
             } catch (e) {
                 log("Caught error", e);
-                await rejectWith(e);
+                reject(e);
             }
         });
     }
