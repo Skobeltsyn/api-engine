@@ -66,6 +66,14 @@ export default class ApiEngine {
     servers: string[] = [];
     /** Attempts per server before failing over to the next one. Default 1. */
     serverFailoverAttempts: number = 1;
+    /**
+     * When true, each request starts its failover sweep at the next server in
+     * rotation (then wraps around the ring), spreading load and avoiding
+     * fronting a dead `servers[0]` on every request. Default false keeps the
+     * fixed-order behavior (always start at `servers[0]`).
+     */
+    roundRobin: boolean = false;
+    private _serverCursor: number = 0;
     sessionContainer: SessionContainer<any>;
     private _cacheContainer: CacheContainer;
     private _debug: boolean = false;
@@ -209,6 +217,10 @@ export default class ApiEngine {
         req.servers = this.servers;
         req.failoverAttempts = this.serverFailoverAttempts;
         req.canUseOutsideLinks = this.canUseOutsideLinks;
+        if (this.roundRobin && this.servers.length > 0) {
+            req.serverStartIndex = this._serverCursor;
+            this._serverCursor = (this._serverCursor + 1) % this.servers.length;
+        }
         return req;
     }
 

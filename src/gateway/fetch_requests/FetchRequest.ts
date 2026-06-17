@@ -28,6 +28,8 @@ export default class FetchRequest {
     servers: string[] = [];
     /** Attempts per server before failing over to the next one. */
     failoverAttempts: number = 1;
+    /** Index in `servers` to begin the failover sweep at (round-robin offset). */
+    serverStartIndex: number = 0;
     /** Mirrors ApiEngine.canUseOutsideLinks; used when rebuilding URLs per server. */
     canUseOutsideLinks: boolean = false;
     private authRetried: boolean = false;
@@ -134,9 +136,11 @@ export default class FetchRequest {
         const me = this;
         const path = me.cacheKey ?? String(me.url);
         const attempts = me.failoverAttempts > 0 ? me.failoverAttempts : 1;
+        const count = me.servers.length;
         let lastErr: unknown = undefined;
 
-        for (const base of me.servers) {
+        for (let s = 0; s < count; s++) {
+            const base = me.servers[(me.serverStartIndex + s) % count];
             const built = buildRequestUrl(base, path, me.canUseOutsideLinks);
             if (built instanceof ApiEngineError) {
                 lastErr = built;
