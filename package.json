@@ -1,6 +1,6 @@
 {
   "name": "api-engine",
-  "version": "0.0.802",
+  "version": "0.0.803",
   "description": "API engine for async fetching",
   "main": "./index.js",
   "types": "./index.d.ts",

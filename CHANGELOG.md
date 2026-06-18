@@ -28,6 +28,11 @@ versioning is roughly semver-with-pre-1.0-allowance.
 - Malformed URLs in fetch methods now reject the returned promise instead of throwing synchronously.
 - `testFetches` is now `TestFetch[]` internally; public surface unchanged.
 
+## [0.0.803] — 2026-06-18
+
+### Changed
+- Version bump; no functional changes since 0.0.802.
+
 ## [0.0.802] — 2026-06-18
 
 ### Added
