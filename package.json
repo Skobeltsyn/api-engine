@@ -11,7 +11,7 @@
     "clean": "rimraf dist",
     "clean_win": "rmdir /s /q dist",
     "build": "npm run clean && tsc && shx cp package.json dist && shx cp README.md dist",
-    "publish": "npm publish dist --registry http://151.248.114.248:5000/",
+    "publish": "cd dist && rimraf api-engine-*.tgz && npm pack && npm publish api-engine-*.tgz --registry http://151.248.114.248:5000/",
     "dev": "vite"
   },
   "repository": {
