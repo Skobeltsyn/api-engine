@@ -28,6 +28,22 @@ versioning is roughly semver-with-pre-1.0-allowance.
 - Malformed URLs in fetch methods now reject the returned promise instead of throwing synchronously.
 - `testFetches` is now `TestFetch[]` internally; public surface unchanged.
 
+## [0.0.802] — 2026-06-18
+
+### Added
+- Multi-server failover: `ApiEngine.servers` + `serverFailoverAttempts`. On a critical error (network failure / 5xx) a request fails over across the pool — each server tried up to N times — then rejects with `ApiEngineError("all_servers_failed")`. Non-critical errors (4xx/auth) reject immediately, no failover. (Redmine #4558)
+- `ApiEngine.roundRobin` (default `false`): rotate the failover starting server per request, wrapping around the ring — avoids fronting a dead `servers[0]` on every request when DNS fallback is unavailable. (Redmine #4561)
+- `isCriticalError(err)` classifier (network throw / 5xx ⇒ critical; 4xx & `ApiEngineError` ⇒ not), exported from the package barrel. (Redmine #4558)
+- `SessionContainer.revokeOnTransientError` (default `false`): transient `checkUser` failures (network / 5xx) keep the session alive; only definitive auth failures (e.g. 401) revoke the JWT. (Redmine #4559)
+- `transformResponse`, `transformError`, and `onAuthFailure` (401 single-retry) hooks on `ApiEngine`. (Redmine #973, #974, #976)
+- MIT `LICENSE` file. (Redmine #977)
+
+### Changed
+- `ApiEngineError` gains the `all_servers_failed` code and an optional `cause` carrying the underlying error. (Redmine #4558)
+
+### Fixed
+- Resolved 6 moderate npm audit advisories (esbuild via the vitest dependency chain) by bumping vitest to v4 (devDependency only — not shipped to consumers). (Redmine #1029)
+
 ## [0.0.801] — 2026-05-03
 
 ### Fixed
